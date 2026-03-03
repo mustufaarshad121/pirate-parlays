@@ -14,6 +14,18 @@ import MyBets from "./pages/MyBets";
 import WalletPage from "./pages/WalletPage";
 import Notifications from "./pages/Notifications";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
+import CommunityFeed from "./pages/CommunityFeed";
+import PoolsPage from "./pages/PoolsPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import BetSharingPage from "./pages/BetSharingPage";
+import LiveStreamPage from "./pages/LiveStreamPage";
+import AdvancedPaymentsPage from "./pages/AdvancedPaymentsPage";
+import PersonalizationPage from "./pages/PersonalizationPage";
+import GroupChatPage from "./pages/GroupChatPage";
+import DMPage from "./pages/DMPage";
+import CaptainGroupsPage from "./pages/CaptainGroupsPage";
+import PirateBucksPage from "./pages/PirateBucksPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminMatches from "./pages/admin/AdminMatches";
@@ -50,6 +62,18 @@ const AppRoutes = () => {
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/community" element={<CommunityFeed />} />
+          <Route path="/pools" element={<PoolsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/bet-sharing" element={<BetSharingPage />} />
+          <Route path="/live-stream" element={<LiveStreamPage />} />
+          <Route path="/payments" element={<AdvancedPaymentsPage />} />
+          <Route path="/personalization" element={<PersonalizationPage />} />
+          <Route path="/group-chat" element={<GroupChatPage />} />
+          <Route path="/messages" element={<DMPage />} />
+          <Route path="/groups" element={<CaptainGroupsPage />} />
+          <Route path="/pirate-bucks" element={<PirateBucksPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       )}
