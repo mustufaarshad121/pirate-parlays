@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { BetProvider } from "@/lib/bet-context";
+import { GroupProvider } from "@/lib/group-context";
 import Login from "./pages/Login";
 import AppLayout from "./components/AppLayout";
 import Home from "./pages/Home";
@@ -22,6 +23,9 @@ import BetSharingPage from "./pages/BetSharingPage";
 import LiveStreamPage from "./pages/LiveStreamPage";
 import AdvancedPaymentsPage from "./pages/AdvancedPaymentsPage";
 import PersonalizationPage from "./pages/PersonalizationPage";
+import GroupingGamePage from "./pages/GroupingGamePage";
+import GroupDetailPage from "./pages/GroupDetailPage";
+import CreateGroupPage from "./pages/CreateGroupPage";
 import GroupChatPage from "./pages/GroupChatPage";
 import DMPage from "./pages/DMPage";
 import CaptainGroupsPage from "./pages/CaptainGroupsPage";
@@ -70,9 +74,12 @@ const AppRoutes = () => {
           <Route path="/live-stream" element={<LiveStreamPage />} />
           <Route path="/payments" element={<AdvancedPaymentsPage />} />
           <Route path="/personalization" element={<PersonalizationPage />} />
+          <Route path="/groups" element={<GroupingGamePage />} />
+          <Route path="/groups/create" element={<CreateGroupPage />} />
+          <Route path="/groups/:id" element={<GroupDetailPage />} />
           <Route path="/group-chat" element={<GroupChatPage />} />
           <Route path="/messages" element={<DMPage />} />
-          <Route path="/groups" element={<CaptainGroupsPage />} />
+          <Route path="/captain-groups" element={<CaptainGroupsPage />} />
           <Route path="/pirate-bucks" element={<PirateBucksPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -85,13 +92,15 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <BetProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
+        <GroupProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </GroupProvider>
       </BetProvider>
     </AuthProvider>
   </QueryClientProvider>
