@@ -30,7 +30,7 @@ const communityLinks = [
 ];
 
 const socialLinks = [
-  { to: '/groups', icon: Anchor, label: 'Groups' },
+  { to: '/groups', icon: Anchor, label: 'Grouping Game' },
   { to: '/group-chat', icon: MessageSquare, label: 'Group Chat' },
   { to: '/messages', icon: MessageCircle, label: 'DMs' },
   { to: '/pirate-bucks', icon: Coins, label: 'Pirate Bucks' },
