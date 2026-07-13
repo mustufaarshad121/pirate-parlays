@@ -82,44 +82,47 @@ export interface GroupInstance {
 
 // ─── DEMO DATA ─────────────────────────────────────────────
 
+// NOTE: These game names and schedules are DEMO RECORDS ONLY.
+// The client has not provided or approved any specific game names.
+// Real game names / schedules will be supplied by Pirate Parlays operations.
 const DEMO_GAMES: SystemGame[] = [
   {
     id: 'sg1',
-    name: 'NFL Sunday Slate',
-    sport: 'NFL',
+    name: 'Demo Game A',
+    sport: 'Demo',
     entryCloses: '2026-03-08T18:00:00',
     status: 'open',
     schedule: [
-      { id: 'sm1', homeTeam: 'Tampa Bay Buccaneers', awayTeam: 'Kansas City Chiefs', league: 'NFL', startTime: 'Sun 1:00 PM' },
-      { id: 'sm2', homeTeam: 'Dallas Cowboys', awayTeam: 'Philadelphia Eagles', league: 'NFL', startTime: 'Sun 4:25 PM' },
-      { id: 'sm3', homeTeam: 'Buffalo Bills', awayTeam: 'Miami Dolphins', league: 'NFL', startTime: 'Sun 4:25 PM' },
-      { id: 'sm4', homeTeam: 'Green Bay Packers', awayTeam: 'Detroit Lions', league: 'NFL', startTime: 'Sun 8:20 PM' },
-      { id: 'sm5', homeTeam: 'San Francisco 49ers', awayTeam: 'LA Rams', league: 'NFL', startTime: 'Mon 8:15 PM' },
+      { id: 'sm1', homeTeam: 'Demo Home 1', awayTeam: 'Demo Away 1', league: 'Demo', startTime: 'Sun 1:00 PM' },
+      { id: 'sm2', homeTeam: 'Demo Home 2', awayTeam: 'Demo Away 2', league: 'Demo', startTime: 'Sun 4:25 PM' },
+      { id: 'sm3', homeTeam: 'Demo Home 3', awayTeam: 'Demo Away 3', league: 'Demo', startTime: 'Sun 4:25 PM' },
+      { id: 'sm4', homeTeam: 'Demo Home 4', awayTeam: 'Demo Away 4', league: 'Demo', startTime: 'Sun 8:20 PM' },
+      { id: 'sm5', homeTeam: 'Demo Home 5', awayTeam: 'Demo Away 5', league: 'Demo', startTime: 'Mon 8:15 PM' },
     ],
   },
   {
     id: 'sg2',
-    name: 'NBA Nightly Sweep',
-    sport: 'NBA',
+    name: 'Demo Game B',
+    sport: 'Demo',
     entryCloses: '2026-03-05T22:00:00',
     status: 'open',
     schedule: [
-      { id: 'sm6', homeTeam: 'Los Angeles Lakers', awayTeam: 'Boston Celtics', league: 'NBA', startTime: 'Wed 7:30 PM' },
-      { id: 'sm7', homeTeam: 'Golden State Warriors', awayTeam: 'Denver Nuggets', league: 'NBA', startTime: 'Wed 10:00 PM' },
-      { id: 'sm8', homeTeam: 'Milwaukee Bucks', awayTeam: 'Miami Heat', league: 'NBA', startTime: 'Wed 8:00 PM' },
-      { id: 'sm9', homeTeam: 'Phoenix Suns', awayTeam: 'Dallas Mavericks', league: 'NBA', startTime: 'Wed 10:00 PM' },
+      { id: 'sm6', homeTeam: 'Demo Home 6', awayTeam: 'Demo Away 6', league: 'Demo', startTime: 'Wed 7:30 PM' },
+      { id: 'sm7', homeTeam: 'Demo Home 7', awayTeam: 'Demo Away 7', league: 'Demo', startTime: 'Wed 10:00 PM' },
+      { id: 'sm8', homeTeam: 'Demo Home 8', awayTeam: 'Demo Away 8', league: 'Demo', startTime: 'Wed 8:00 PM' },
+      { id: 'sm9', homeTeam: 'Demo Home 9', awayTeam: 'Demo Away 9', league: 'Demo', startTime: 'Wed 10:00 PM' },
     ],
   },
   {
     id: 'sg3',
-    name: 'EPL Weekend Fixtures',
-    sport: 'EPL',
+    name: 'Demo Game C',
+    sport: 'Demo',
     entryCloses: '2026-03-07T12:00:00',
     status: 'open',
     schedule: [
-      { id: 'sm10', homeTeam: 'Manchester United', awayTeam: 'Liverpool', league: 'EPL', startTime: 'Sat 12:30 PM' },
-      { id: 'sm11', homeTeam: 'Arsenal', awayTeam: 'Chelsea', league: 'EPL', startTime: 'Sat 3:00 PM' },
-      { id: 'sm12', homeTeam: 'Manchester City', awayTeam: 'Tottenham', league: 'EPL', startTime: 'Sun 4:30 PM' },
+      { id: 'sm10', homeTeam: 'Demo Home 10', awayTeam: 'Demo Away 10', league: 'Demo', startTime: 'Sat 12:30 PM' },
+      { id: 'sm11', homeTeam: 'Demo Home 11', awayTeam: 'Demo Away 11', league: 'Demo', startTime: 'Sat 3:00 PM' },
+      { id: 'sm12', homeTeam: 'Demo Home 12', awayTeam: 'Demo Away 12', league: 'Demo', startTime: 'Sun 4:30 PM' },
     ],
   },
 ];
@@ -159,6 +162,12 @@ const DEMO_INSTANCES: GroupInstance[] = [
 
 // ─── CONTEXT ───────────────────────────────────────────────
 
+// Dev-only flag — flip to true ONLY in a private development/demo environment
+// to expose the "Simulate → Proceeds / Null & Void" walkthrough controls.
+// These are NOT confirmed production Admin controls. In real flow, the system
+// enforces the minimum-participant rule automatically at entry cutoff.
+export const DEV_DEMO_CONTROLS_ENABLED = false;
+
 interface GroupContextType {
   games: SystemGame[];
   instances: GroupInstance[];
@@ -174,7 +183,6 @@ interface GroupContextType {
   getSlipsForInstance: (instanceId: string) => UserSlip[];
   simulateProceed: (instanceId: string) => void;
   simulateNullAndVoid: (instanceId: string) => void;
-  estimatedPayoutRange: (wager: WagerOption, groupSize: GroupSizeOption, currentMembers: number) => { low: number; high: number };
 }
 
 const GroupContext = createContext<GroupContextType | null>(null);
@@ -190,15 +198,9 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const [games] = useState<SystemGame[]>(DEMO_GAMES);
   const [instances, setInstances] = useState<GroupInstance[]>(DEMO_INSTANCES);
   const [mySlips, setMySlips] = useState<UserSlip[]>([]);
-
-  // Estimated payout is a DEMO placeholder — actual formula is UNCONFIRMED per spec §8.
-  // We show a range based on the pool size to satisfy VC-07 without inventing a rule.
-  const estimatedPayoutRange = (wager: WagerOption, groupSize: GroupSizeOption, currentMembers: number) => {
-    const projected = Math.max(currentMembers, 5);
-    const pool = wager * projected;
-    // Demo-only illustrative range (final formula pending client confirmation)
-    return { low: +(pool * 0.5).toFixed(2), high: +(pool * 0.9).toFixed(2) };
-  };
+  // NOTE: No numerical estimated-payout calculation is exposed. The client has
+  // not confirmed the payout formula, platform fee, winner allocation, or tie
+  // handling. UI shows a non-numerical placeholder instead.
 
   const submitSlip: GroupContextType['submitSlip'] = ({ gameId, picks, wager, groupSize }) => {
     if (!user) return { ok: false, error: 'Not signed in' };
@@ -299,7 +301,6 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       getSlipsForInstance,
       simulateProceed,
       simulateNullAndVoid,
-      estimatedPayoutRange,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [games, instances, mySlips, user],
