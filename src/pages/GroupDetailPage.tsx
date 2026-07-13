@@ -123,29 +123,32 @@ const GroupDetailPage = () => {
                   Fewer than 5 bettors joined this group. Per Pirate Parlays rules, Pirate Parlays and AI do not fill missing slips.
                 </p>
                 <p className="text-[11px] text-warning mt-1">
-                  ⚠️ Wallet refund / credit rule for null-and-void groups is unconfirmed and is not applied in this demo.
+                  ⚠️ Wallet handling for null-and-void groups (refund, credit, or forfeiture) is unconfirmed. No automatic refund, transfer, or wager carry-over is applied.
                 </p>
               </div>
             </div>
             <Button className="w-full" onClick={() => navigate('/groups')}>
               Fill out another slip <ChevronRight size={14} className="ml-1" />
             </Button>
+            <p className="text-[11px] text-muted-foreground text-center">
+              Filling another slip requires a new wager. It does not reuse the original wager and is not restricted to the same game — rules pending client confirmation.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Estimated payout */}
-      <Card>
+      {/* Estimated payout — non-numerical placeholder */}
+      <Card className="border-warning/30 bg-warning/5">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm">Estimated Payout</CardTitle>
-          <Badge variant="outline" className="text-[10px] border-warning/40 text-warning">Demo estimate</Badge>
+          <Badge variant="outline" className="text-[10px] border-warning/40 text-warning">Pending</Badge>
         </CardHeader>
         <CardContent>
-          <p className="text-lg font-display font-bold text-primary">
-            ${est.low.toFixed(2)} – ${est.high.toFixed(2)}
+          <p className="text-sm text-foreground">
+            Estimated payout pending final payout formula confirmation.
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Illustrative only. Final scoring, winner determination, payout formula, ties, and fees are pending client confirmation.
+            Payout formula, platform fee, winner allocation, and tie handling have not been confirmed by the client. No amounts are calculated or displayed.
           </p>
         </CardContent>
       </Card>
@@ -197,11 +200,13 @@ const GroupDetailPage = () => {
         </CardContent>
       </Card>
 
-      {/* Demo controls */}
-      {(instance.status === 'forming') && (
+      {/* Dev-only demo controls — hidden unless DEV_DEMO_CONTROLS_ENABLED */}
+      {DEV_DEMO_CONTROLS_ENABLED && instance.status === 'forming' && (
         <Card className="border-warning/30">
           <CardContent className="p-4 space-y-2">
-            <p className="text-xs text-warning flex items-center gap-1"><AlertCircle size={12} /> Demo controls (client walkthrough)</p>
+            <p className="text-xs text-warning flex items-center gap-1">
+              <AlertCircle size={12} /> Dev-only walkthrough controls — not a production Admin feature. In real flow, the system enforces the 5-bettor minimum automatically at entry cutoff.
+            </p>
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" variant="outline" onClick={() => simulateProceed(instance.id)}>
                 Simulate → Proceeds
