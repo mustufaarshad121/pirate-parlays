@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
-import { useGroups } from '@/lib/group-context';
+import { useGroups, DEV_DEMO_CONTROLS_ENABLED } from '@/lib/group-context';
 import DemoBadge from '@/components/DemoBadge';
 import { statusConfig } from './GroupingGamePage';
 import {
@@ -22,7 +22,7 @@ const GroupDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getInstance, getGame, estimatedPayoutRange, simulateProceed, simulateNullAndVoid, mySlips } = useGroups();
+  const { getInstance, getGame, simulateProceed, simulateNullAndVoid, mySlips } = useGroups();
 
   const instance = id ? getInstance(id) : undefined;
   if (!instance) {
@@ -35,7 +35,6 @@ const GroupDetailPage = () => {
   const game = getGame(instance.gameId)!;
   const isMember = user ? instance.memberIds.includes(user.id) : false;
   const mySlip = mySlips.find(s => s.groupInstanceId === instance.id);
-  const est = estimatedPayoutRange(instance.wager, instance.groupSize, instance.memberIds.length);
   const cfg = statusConfig[instance.status];
   const spotsLeft = Math.max(0, instance.groupSize - instance.memberIds.length);
   const minMet = instance.memberIds.length >= 5;

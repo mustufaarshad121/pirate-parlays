@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +14,12 @@ import {
   type WagerOption,
 } from '@/lib/group-context';
 import DemoBadge from '@/components/DemoBadge';
-import { ArrowLeft, Calendar, CheckCircle2, Info, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, Info, Trophy } from 'lucide-react';
 
 const GameEntryPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getGame, submitSlip, estimatedPayoutRange, instances } = useGroups();
+  const { getGame, submitSlip } = useGroups();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -27,14 +27,6 @@ const GameEntryPage = () => {
   const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [wager, setWager] = useState<WagerOption>(5);
   const [groupSize, setGroupSize] = useState<GroupSizeOption>(10);
-
-  const est = useMemo(() => {
-    const existing = instances.find(
-      i => i.gameId === id && i.wager === wager && i.groupSize === groupSize && i.status !== 'settled',
-    );
-    const currentMembers = existing ? existing.memberIds.length + 1 : 1;
-    return estimatedPayoutRange(wager, groupSize, currentMembers);
-  }, [instances, id, wager, groupSize, estimatedPayoutRange]);
 
   if (!game) {
     return (
@@ -163,18 +155,18 @@ const GameEntryPage = () => {
         </CardContent>
       </Card>
 
-      {/* Estimated payout — DEMO ONLY */}
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="p-4 space-y-2">
+      {/* Estimated payout — non-numerical placeholder (formula unconfirmed) */}
+      <Card className="border-warning/30 bg-warning/5">
+        <CardContent className="p-4 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Estimated Payout</span>
-            <Badge variant="outline" className="text-[10px] border-warning/40 text-warning">Demo estimate</Badge>
+            <Badge variant="outline" className="text-[10px] border-warning/40 text-warning">Pending</Badge>
           </div>
-          <p className="text-lg font-display font-bold text-primary">
-            ${est.low.toFixed(2)} – ${est.high.toFixed(2)}
+          <p className="text-sm text-foreground">
+            Estimated payout pending final payout formula confirmation.
           </p>
           <p className="text-[11px] text-muted-foreground">
-            Illustrative range only. Final scoring, winner determination, payout formula, ties, fees, and null-and-void wallet handling are pending client confirmation and are <span className="text-warning">not implemented</span> in this demo.
+            Scoring, winner allocation, platform fee, tie handling, and null-and-void wallet rules have not been confirmed by the client. No amounts are calculated or displayed.
           </p>
         </CardContent>
       </Card>
