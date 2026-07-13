@@ -1,197 +1,180 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth';
-import { MATCHES, type Match } from '@/lib/data';
-import { MOCK_GROUPS, MOCK_GROUP_MESSAGES, type ChatMessage, type PirateRank } from '@/lib/mock-social';
 
-// ─── TYPES ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// PIRATE PARLAYS — GROUPING GAME v2.0
+// Per Final Client-Confirmed Override (July 13, 2026)
+//
+// CONFIRMED:
+// - Pirate Parlays (system) creates games; users pick winners/losers
+// - Users fill their OWN slip
+// - Wagers: $5 | $10 | $20  (fixed options)
+// - Group sizes: 10 | 25 | 50  (fixed options)
+// - Random grouping by (game + wager + group size)
+// - Minimum 5 bettors to proceed; <5 = null-and-void
+// - No Company/AI filler slips
+// - Null-and-void users get option to fill another slip
+// - Estimated payout must be visible (no final formula confirmed)
+//
+// REMOVED (from prior spec):
+// - Captain-created / Captain-controlled groups
+// - Shared parlay slip across group members
+// - Group activates only when full
+// - Fixed Stake × Combined Odds as final payout rule
+// ─────────────────────────────────────────────────────────────
 
-export type GroupStatus = 'Open' | 'Locked' | 'Active' | 'Completed';
+export type WagerOption = 5 | 10 | 20;
+export type GroupSizeOption = 10 | 25 | 50;
+export const WAGER_OPTIONS: WagerOption[] = [5, 10, 20];
+export const GROUP_SIZE_OPTIONS: GroupSizeOption[] = [10, 25, 50];
 
-export interface ParlaySelection {
-  matchId: string;
+export type Pick = 'winner' | 'loser';
+
+export interface ScheduleMatch {
+  id: string;
   homeTeam: string;
   awayTeam: string;
-  marketType: string;
-  outcome: string;
-  odds: number;
+  league: string;
+  startTime: string;
 }
 
-export interface GroupGame {
+// A "System Game" is created by Pirate Parlays. Contains a schedule of matches.
+export interface SystemGame {
   id: string;
   name: string;
   sport: string;
-  captainId: string;
-  captainName: string;
-  entryAmount: number;
-  maxUsers: number;
-  currentUsers: number;
-  status: GroupStatus;
-  createdDate: string;
-  joinCriteria: string;
-  parlaySlip: ParlaySelection[];
-  combinedOdds: number;
-  members: { id: string; username: string; rank: PirateRank }[];
+  entryCloses: string;
+  status: 'open' | 'closed' | 'settled';
+  schedule: ScheduleMatch[];
 }
 
-export interface GroupBetRecord {
-  betId: string;
+// A user's own slip (they pick winner/loser per match).
+export interface UserSlip {
+  id: string;
+  gameId: string;
   userId: string;
   username: string;
-  groupId: string;
-  stake: number;
-  parlaySelections: ParlaySelection[];
-  potentialPayout: number;
-  status: 'pending' | 'won' | 'lost';
+  picks: Record<string, Pick>; // matchId -> winner|loser
+  wager: WagerOption;
+  groupSize: GroupSizeOption;
+  submittedAt: string;
+  groupInstanceId: string;
+  refunded?: boolean; // for null-and-void cases (UI hint only; wallet rule unconfirmed)
 }
 
-// ─── DEMO DATA ─────────────────────────────────────────
+export type GroupInstanceStatus =
+  | 'forming'        // waiting for more bettors / entry window open
+  | 'proceeding'     // has ≥5 bettors; will run
+  | 'null_and_void'  // <5 bettors after cutoff
+  | 'settled';       // scoring complete (unconfirmed — placeholder)
 
-const DEMO_GROUPS: GroupGame[] = [
+// A random-grouped instance: same game, same wager, same group size.
+export interface GroupInstance {
+  id: string;
+  gameId: string;
+  wager: WagerOption;
+  groupSize: GroupSizeOption;
+  memberIds: string[];         // user IDs in this instance
+  memberNames: string[];       // parallel usernames
+  status: GroupInstanceStatus;
+  createdAt: string;
+}
+
+// ─── DEMO DATA ─────────────────────────────────────────────
+
+const DEMO_GAMES: SystemGame[] = [
   {
-    id: 'gg1',
-    name: "Sparrow's Sunday Smash",
+    id: 'sg1',
+    name: 'NFL Sunday Slate',
     sport: 'NFL',
-    captainId: 'u2',
-    captainName: 'JackSparrow22',
-    entryAmount: 25,
-    maxUsers: 5,
-    currentUsers: 3,
-    status: 'Open',
-    createdDate: '2026-03-03T10:00:00',
-    joinCriteria: 'Min 50 bets placed. Win rate above 55%.',
-    parlaySlip: [
-      { matchId: 'm1', homeTeam: 'Tampa Bay Buccaneers', awayTeam: 'Kansas City Chiefs', marketType: 'Moneyline', outcome: 'Chiefs', odds: 1.75 },
-      { matchId: 'm2', homeTeam: 'Los Angeles Lakers', awayTeam: 'Boston Celtics', marketType: 'Moneyline', outcome: 'Lakers', odds: 1.65 },
-      { matchId: 'm3', homeTeam: 'New York Yankees', awayTeam: 'Houston Astros', marketType: 'Over/Under', outcome: 'Over 8.5', odds: 1.85 },
-    ],
-    combinedOdds: 5.35,
-    members: [
-      { id: 'u2', username: 'JackSparrow22', rank: 'Captain' },
-      { id: 'u4', username: 'ParlayKing', rank: 'First mate' },
-      { id: 'u5', username: 'OddsShark', rank: 'Deck hand' },
+    entryCloses: '2026-03-08T18:00:00',
+    status: 'open',
+    schedule: [
+      { id: 'sm1', homeTeam: 'Tampa Bay Buccaneers', awayTeam: 'Kansas City Chiefs', league: 'NFL', startTime: 'Sun 1:00 PM' },
+      { id: 'sm2', homeTeam: 'Dallas Cowboys', awayTeam: 'Philadelphia Eagles', league: 'NFL', startTime: 'Sun 4:25 PM' },
+      { id: 'sm3', homeTeam: 'Buffalo Bills', awayTeam: 'Miami Dolphins', league: 'NFL', startTime: 'Sun 4:25 PM' },
+      { id: 'sm4', homeTeam: 'Green Bay Packers', awayTeam: 'Detroit Lions', league: 'NFL', startTime: 'Sun 8:20 PM' },
+      { id: 'sm5', homeTeam: 'San Francisco 49ers', awayTeam: 'LA Rams', league: 'NFL', startTime: 'Mon 8:15 PM' },
     ],
   },
   {
-    id: 'gg2',
-    name: 'High Rollers 3-Leg',
+    id: 'sg2',
+    name: 'NBA Nightly Sweep',
     sport: 'NBA',
-    captainId: 'u5',
-    captainName: 'OddsShark',
-    entryAmount: 50,
-    maxUsers: 4,
-    currentUsers: 4,
-    status: 'Active',
-    createdDate: '2026-03-02T18:00:00',
-    joinCriteria: 'Minimum balance $500.',
-    parlaySlip: [
-      { matchId: 'm2', homeTeam: 'Los Angeles Lakers', awayTeam: 'Boston Celtics', marketType: 'Spread', outcome: 'Lakers -4.5', odds: 1.90 },
-      { matchId: 'm1', homeTeam: 'Tampa Bay Buccaneers', awayTeam: 'Kansas City Chiefs', marketType: 'Over/Under', outcome: 'Over 48.5', odds: 1.90 },
-    ],
-    combinedOdds: 3.61,
-    members: [
-      { id: 'u5', username: 'OddsShark', rank: 'Captain' },
-      { id: 'u2', username: 'JackSparrow22', rank: 'First mate' },
-      { id: 'u4', username: 'ParlayKing', rank: 'First mate' },
-      { id: 'u6', username: 'BetMaster99', rank: 'Cook' },
+    entryCloses: '2026-03-05T22:00:00',
+    status: 'open',
+    schedule: [
+      { id: 'sm6', homeTeam: 'Los Angeles Lakers', awayTeam: 'Boston Celtics', league: 'NBA', startTime: 'Wed 7:30 PM' },
+      { id: 'sm7', homeTeam: 'Golden State Warriors', awayTeam: 'Denver Nuggets', league: 'NBA', startTime: 'Wed 10:00 PM' },
+      { id: 'sm8', homeTeam: 'Milwaukee Bucks', awayTeam: 'Miami Heat', league: 'NBA', startTime: 'Wed 8:00 PM' },
+      { id: 'sm9', homeTeam: 'Phoenix Suns', awayTeam: 'Dallas Mavericks', league: 'NBA', startTime: 'Wed 10:00 PM' },
     ],
   },
   {
-    id: 'gg3',
-    name: 'EPL Parlay Party',
+    id: 'sg3',
+    name: 'EPL Weekend Fixtures',
     sport: 'EPL',
-    captainId: 'u4',
-    captainName: 'ParlayKing',
-    entryAmount: 10,
-    maxUsers: 10,
-    currentUsers: 10,
-    status: 'Completed',
-    createdDate: '2026-02-28T12:00:00',
-    joinCriteria: 'Open to all!',
-    parlaySlip: [
-      { matchId: 'm4', homeTeam: 'Manchester United', awayTeam: 'Liverpool', marketType: 'Moneyline', outcome: 'Liverpool', odds: 2.10 },
-      { matchId: 'm4', homeTeam: 'Manchester United', awayTeam: 'Liverpool', marketType: 'Over/Under', outcome: 'Over 2.5', odds: 1.80 },
+    entryCloses: '2026-03-07T12:00:00',
+    status: 'open',
+    schedule: [
+      { id: 'sm10', homeTeam: 'Manchester United', awayTeam: 'Liverpool', league: 'EPL', startTime: 'Sat 12:30 PM' },
+      { id: 'sm11', homeTeam: 'Arsenal', awayTeam: 'Chelsea', league: 'EPL', startTime: 'Sat 3:00 PM' },
+      { id: 'sm12', homeTeam: 'Manchester City', awayTeam: 'Tottenham', league: 'EPL', startTime: 'Sun 4:30 PM' },
     ],
-    combinedOdds: 3.78,
-    members: [
-      { id: 'u4', username: 'ParlayKing', rank: 'Captain' },
-      { id: 'u2', username: 'JackSparrow22', rank: 'First mate' },
-      { id: 'u1', username: 'user1', rank: 'Pilot' },
-      { id: 'u5', username: 'OddsShark', rank: 'Deck hand' },
-      { id: 'u6', username: 'BetMaster99', rank: 'Cook' },
-      { id: 'u7', username: 'TreasureHunter', rank: 'Pilot' },
-      { id: 'u8', username: 'DeadMansHand', rank: 'Deck hand' },
-      { id: 'u9', username: 'SeaDog77', rank: 'Cook' },
-      { id: 'u10', username: 'CannonBall', rank: 'Pilot' },
-      { id: 'u11', username: 'RumRunner', rank: 'Crew member' },
-    ],
+  },
+];
+
+const DEMO_INSTANCES: GroupInstance[] = [
+  {
+    id: 'gi1', gameId: 'sg1', wager: 10, groupSize: 10,
+    memberIds: ['u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u10', 'u11'],
+    memberNames: ['JackSparrow22', 'BlackBeard', 'ParlayKing', 'OddsShark', 'BetMaster99', 'TreasureHunter', 'DeadMansHand', 'SeaDog77', 'CannonBall', 'RumRunner'],
+    status: 'proceeding', createdAt: '2026-03-04T08:00:00',
   },
   {
-    id: 'gg4',
-    name: 'UFC Night Crew',
-    sport: 'NFL',
-    captainId: 'u2',
-    captainName: 'JackSparrow22',
-    entryAmount: 15,
-    maxUsers: 8,
-    currentUsers: 2,
-    status: 'Open',
-    createdDate: '2026-03-04T09:00:00',
-    joinCriteria: '',
-    parlaySlip: [
-      { matchId: 'm5', homeTeam: 'Connor McGregor', awayTeam: 'Dustin Poirier', marketType: 'Moneyline', outcome: 'McGregor', odds: 2.40 },
-      { matchId: 'm6', homeTeam: 'Toronto Maple Leafs', awayTeam: 'Montreal Canadiens', marketType: 'Moneyline', outcome: 'Maple Leafs', odds: 1.45 },
-    ],
-    combinedOdds: 3.48,
-    members: [
-      { id: 'u2', username: 'JackSparrow22', rank: 'Captain' },
-      { id: 'u4', username: 'ParlayKing', rank: 'First mate' },
-    ],
+    id: 'gi2', gameId: 'sg1', wager: 20, groupSize: 10,
+    memberIds: ['u2', 'u4', 'u5', 'u6', 'u7', 'u8'],
+    memberNames: ['JackSparrow22', 'ParlayKing', 'OddsShark', 'BetMaster99', 'TreasureHunter', 'DeadMansHand'],
+    status: 'proceeding', createdAt: '2026-03-04T09:15:00',
+  },
+  {
+    id: 'gi3', gameId: 'sg1', wager: 5, groupSize: 10,
+    memberIds: ['u3', 'u9', 'u10'],
+    memberNames: ['BlackBeard', 'SeaDog77', 'CannonBall'],
+    status: 'null_and_void', createdAt: '2026-03-03T14:00:00',
+  },
+  {
+    id: 'gi4', gameId: 'sg2', wager: 20, groupSize: 25,
+    memberIds: Array.from({ length: 25 }, (_, i) => `demo-u${i + 20}`),
+    memberNames: Array.from({ length: 25 }, (_, i) => `Bettor${i + 1}`),
+    status: 'proceeding', createdAt: '2026-03-04T10:00:00',
+  },
+  {
+    id: 'gi5', gameId: 'sg2', wager: 10, groupSize: 50,
+    memberIds: Array.from({ length: 34 }, (_, i) => `demo-u${i + 100}`),
+    memberNames: Array.from({ length: 34 }, (_, i) => `Bettor${i + 40}`),
+    status: 'forming', createdAt: '2026-03-05T06:00:00',
   },
 ];
 
-const DEMO_GROUP_BETS: GroupBetRecord[] = [
-  // Bets for completed group gg3 (all won)
-  { betId: 'gb1', userId: 'u4', username: 'ParlayKing', groupId: 'gg3', stake: 10, parlaySelections: DEMO_GROUPS[2].parlaySlip, potentialPayout: 37.80, status: 'won' },
-  { betId: 'gb2', userId: 'u2', username: 'JackSparrow22', groupId: 'gg3', stake: 10, parlaySelections: DEMO_GROUPS[2].parlaySlip, potentialPayout: 37.80, status: 'won' },
-  { betId: 'gb3', userId: 'u1', username: 'user1', groupId: 'gg3', stake: 10, parlaySelections: DEMO_GROUPS[2].parlaySlip, potentialPayout: 37.80, status: 'won' },
-  // Bets for active group gg2
-  { betId: 'gb4', userId: 'u5', username: 'OddsShark', groupId: 'gg2', stake: 50, parlaySelections: DEMO_GROUPS[1].parlaySlip, potentialPayout: 180.50, status: 'pending' },
-  { betId: 'gb5', userId: 'u2', username: 'JackSparrow22', groupId: 'gg2', stake: 50, parlaySelections: DEMO_GROUPS[1].parlaySlip, potentialPayout: 180.50, status: 'pending' },
-];
-
-const DEMO_CHAT: Record<string, ChatMessage[]> = {
-  gg1: [
-    { id: 'gc1', senderId: 'u2', senderName: 'JackSparrow22', text: 'Welcome to Sunday Smash! 🏴‍☠️ Chiefs + Lakers + Over is the play!', timestamp: '2026-03-03T10:05:00' },
-    { id: 'gc2', senderId: 'u4', senderName: 'ParlayKing', text: 'Love it Cap! This parlay is fire 🔥', timestamp: '2026-03-03T10:10:00' },
-    { id: 'gc3', senderId: 'u5', senderName: 'OddsShark', text: 'Chiefs ML is solid. +5.35 combined? Let\'s go!', timestamp: '2026-03-03T10:15:00' },
-    { id: 'gc4', senderId: 'u2', senderName: 'JackSparrow22', text: 'Need 2 more crew members to fill up and lock this in! Spread the word!', timestamp: '2026-03-03T11:00:00' },
-  ],
-  gg2: [
-    { id: 'gc5', senderId: 'u5', senderName: 'OddsShark', text: 'Group is locked! All bets are live 🎯', timestamp: '2026-03-02T20:00:00' },
-    { id: 'gc6', senderId: 'u2', senderName: 'JackSparrow22', text: 'Lakers looking good early! Let\'s ride!', timestamp: '2026-03-02T20:30:00' },
-  ],
-  gg3: [
-    { id: 'gc7', senderId: 'u4', senderName: 'ParlayKing', text: '🎉🎉🎉 WE HIT! Liverpool + Over 2.5 CASH! +3.78 parlay!', timestamp: '2026-02-28T22:00:00' },
-    { id: 'gc8', senderId: 'u1', senderName: 'user1', text: 'LETS GOOOO! $37.80 payout each! 🏴‍☠️💰', timestamp: '2026-02-28T22:02:00' },
-    { id: 'gc9', senderId: 'u2', senderName: 'JackSparrow22', text: 'Great pick Cap! Tailing your next group for sure!', timestamp: '2026-02-28T22:05:00' },
-  ],
-  gg4: [
-    { id: 'gc10', senderId: 'u2', senderName: 'JackSparrow22', text: 'McGregor + Leafs parlay. Easy money! Who\'s in?', timestamp: '2026-03-04T09:05:00' },
-  ],
-};
-
-// ─── CONTEXT ───────────────────────────────────────────
+// ─── CONTEXT ───────────────────────────────────────────────
 
 interface GroupContextType {
-  groups: GroupGame[];
-  groupBets: GroupBetRecord[];
-  groupChats: Record<string, ChatMessage[]>;
-  joinGroup: (groupId: string) => boolean;
-  createGroup: (group: Omit<GroupGame, 'id' | 'status' | 'currentUsers' | 'combinedOdds' | 'createdDate' | 'members'>) => string;
-  sendGroupMessage: (groupId: string, text: string) => void;
-  settleGroup: (groupId: string, result: 'won' | 'lost') => void;
-  getUserGroups: (userId: string) => GroupGame[];
-  getGroupBets: (groupId: string) => GroupBetRecord[];
+  games: SystemGame[];
+  instances: GroupInstance[];
+  mySlips: UserSlip[];
+  submitSlip: (input: {
+    gameId: string;
+    picks: Record<string, Pick>;
+    wager: WagerOption;
+    groupSize: GroupSizeOption;
+  }) => { ok: boolean; slipId?: string; instanceId?: string; error?: string };
+  getInstance: (id: string) => GroupInstance | undefined;
+  getGame: (id: string) => SystemGame | undefined;
+  getSlipsForInstance: (instanceId: string) => UserSlip[];
+  simulateProceed: (instanceId: string) => void;
+  simulateNullAndVoid: (instanceId: string) => void;
+  estimatedPayoutRange: (wager: WagerOption, groupSize: GroupSizeOption, currentMembers: number) => { low: number; high: number };
 }
 
 const GroupContext = createContext<GroupContextType | null>(null);
@@ -204,118 +187,123 @@ export const useGroups = () => {
 
 export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const { user, updateBalance } = useAuth();
-  const [groups, setGroups] = useState<GroupGame[]>(DEMO_GROUPS);
-  const [groupBets, setGroupBets] = useState<GroupBetRecord[]>(DEMO_GROUP_BETS);
-  const [groupChats, setGroupChats] = useState<Record<string, ChatMessage[]>>(DEMO_CHAT);
+  const [games] = useState<SystemGame[]>(DEMO_GAMES);
+  const [instances, setInstances] = useState<GroupInstance[]>(DEMO_INSTANCES);
+  const [mySlips, setMySlips] = useState<UserSlip[]>([]);
 
-  const calculateCombinedOdds = (selections: ParlaySelection[]) =>
-    parseFloat(selections.reduce((acc, s) => acc * s.odds, 1).toFixed(2));
+  // Estimated payout is a DEMO placeholder — actual formula is UNCONFIRMED per spec §8.
+  // We show a range based on the pool size to satisfy VC-07 without inventing a rule.
+  const estimatedPayoutRange = (wager: WagerOption, groupSize: GroupSizeOption, currentMembers: number) => {
+    const projected = Math.max(currentMembers, 5);
+    const pool = wager * projected;
+    // Demo-only illustrative range (final formula pending client confirmation)
+    return { low: +(pool * 0.5).toFixed(2), high: +(pool * 0.9).toFixed(2) };
+  };
 
-  const joinGroup = (groupId: string): boolean => {
-    if (!user) return false;
-    const group = groups.find(g => g.id === groupId);
-    if (!group || group.status !== 'Open') return false;
-    if (group.currentUsers >= group.maxUsers) return false;
-    if (user.balance < group.entryAmount) return false;
-    if (group.members.some(m => m.id === user.id)) return false;
+  const submitSlip: GroupContextType['submitSlip'] = ({ gameId, picks, wager, groupSize }) => {
+    if (!user) return { ok: false, error: 'Not signed in' };
+    if (user.balance < wager) return { ok: false, error: 'Insufficient balance' };
 
-    // Deduct entry
-    updateBalance(-group.entryAmount);
+    // Random grouping: find an OPEN instance matching game+wager+groupSize with room.
+    let target = instances.find(
+      i =>
+        i.gameId === gameId &&
+        i.wager === wager &&
+        i.groupSize === groupSize &&
+        (i.status === 'forming' || i.status === 'proceeding') &&
+        i.memberIds.length < i.groupSize &&
+        !i.memberIds.includes(user.id),
+    );
 
-    const newCurrentUsers = group.currentUsers + 1;
-    const isFull = newCurrentUsers >= group.maxUsers;
+    const now = new Date().toISOString();
+    let instanceId: string;
 
-    setGroups(prev => prev.map(g => g.id === groupId ? {
-      ...g,
-      currentUsers: newCurrentUsers,
-      status: isFull ? 'Active' as GroupStatus : 'Open' as GroupStatus,
-      members: [...g.members, { id: user.id, username: user.username, rank: 'Crew member' as PirateRank }],
-    } : g));
-
-    // Create bet record for user
-    const betRecord: GroupBetRecord = {
-      betId: `gb-${Date.now()}`,
-      userId: user.id,
-      username: user.username,
-      groupId,
-      stake: group.entryAmount,
-      parlaySelections: group.parlaySlip,
-      potentialPayout: parseFloat((group.entryAmount * group.combinedOdds).toFixed(2)),
-      status: 'pending',
-    };
-    setGroupBets(prev => [...prev, betRecord]);
-
-    // If group is now full, create bet records for existing members who don't have one
-    if (isFull) {
-      const existingBetUserIds = groupBets.filter(b => b.groupId === groupId).map(b => b.userId);
-      const missingMembers = group.members.filter(m => !existingBetUserIds.includes(m.id) && m.id !== user.id);
-      const newBets: GroupBetRecord[] = missingMembers.map(m => ({
-        betId: `gb-${Date.now()}-${m.id}`,
-        userId: m.id,
-        username: m.username,
-        groupId,
-        stake: group.entryAmount,
-        parlaySelections: group.parlaySlip,
-        potentialPayout: parseFloat((group.entryAmount * group.combinedOdds).toFixed(2)),
-        status: 'pending' as const,
-      }));
-      setGroupBets(prev => [...prev, ...newBets]);
+    if (!target) {
+      // No matching instance — Pirate Parlays opens a new random-grouped instance.
+      instanceId = `gi-${Date.now()}`;
+      const newInstance: GroupInstance = {
+        id: instanceId,
+        gameId,
+        wager,
+        groupSize,
+        memberIds: [user.id],
+        memberNames: [user.username],
+        status: 'forming',
+        createdAt: now,
+      };
+      setInstances(prev => [newInstance, ...prev]);
+    } else {
+      instanceId = target.id;
+      setInstances(prev =>
+        prev.map(i => {
+          if (i.id !== instanceId) return i;
+          const memberIds = [...i.memberIds, user.id];
+          const memberNames = [...i.memberNames, user.username];
+          const nextStatus: GroupInstanceStatus = memberIds.length >= 5 ? 'proceeding' : 'forming';
+          return { ...i, memberIds, memberNames, status: nextStatus };
+        }),
+      );
     }
 
-    return true;
-  };
+    // Deduct wager
+    updateBalance(-wager);
 
-  const createGroup = (input: Omit<GroupGame, 'id' | 'status' | 'currentUsers' | 'combinedOdds' | 'createdDate' | 'members'>): string => {
-    if (!user) return '';
-    const id = `gg-${Date.now()}`;
-    const combinedOdds = calculateCombinedOdds(input.parlaySlip);
-    const newGroup: GroupGame = {
-      ...input,
-      id,
-      status: 'Open',
-      currentUsers: 1,
-      combinedOdds,
-      createdDate: new Date().toISOString(),
-      members: [{ id: user.id, username: user.username, rank: 'Captain' as PirateRank }],
+    const slipId = `slip-${Date.now()}`;
+    const slip: UserSlip = {
+      id: slipId,
+      gameId,
+      userId: user.id,
+      username: user.username,
+      picks,
+      wager,
+      groupSize,
+      submittedAt: now,
+      groupInstanceId: instanceId,
     };
-    setGroups(prev => [newGroup, ...prev]);
-    setGroupChats(prev => ({ ...prev, [id]: [] }));
-    return id;
+    setMySlips(prev => [slip, ...prev]);
+
+    return { ok: true, slipId, instanceId };
   };
 
-  const sendGroupMessage = (groupId: string, text: string) => {
-    if (!user) return;
-    const msg: ChatMessage = {
-      id: `gc-${Date.now()}`,
-      senderId: user.id,
-      senderName: user.username,
-      text,
-      timestamp: new Date().toISOString(),
-    };
-    setGroupChats(prev => ({
-      ...prev,
-      [groupId]: [...(prev[groupId] || []), msg],
-    }));
+  const getInstance = (id: string) => instances.find(i => i.id === id);
+  const getGame = (id: string) => games.find(g => g.id === id);
+  const getSlipsForInstance = (instanceId: string) => mySlips.filter(s => s.groupInstanceId === instanceId);
+
+  // DEMO controls — let clients see both outcomes visually
+  const simulateProceed = (instanceId: string) => {
+    setInstances(prev =>
+      prev.map(i => {
+        if (i.id !== instanceId) return i;
+        // Add filler demo names (labeled clearly as demo) to reach at least 5
+        const needed = Math.max(0, 5 - i.memberIds.length);
+        const memberIds = [...i.memberIds, ...Array.from({ length: needed }, (_, k) => `demo-fill-${k}`)];
+        const memberNames = [...i.memberNames, ...Array.from({ length: needed }, (_, k) => `Bettor${100 + k}`)];
+        return { ...i, memberIds, memberNames, status: 'proceeding' };
+      }),
+    );
   };
 
-  const settleGroup = (groupId: string, result: 'won' | 'lost') => {
-    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, status: 'Completed' as GroupStatus } : g));
-    setGroupBets(prev => prev.map(b => {
-      if (b.groupId !== groupId) return b;
-      const newBet = { ...b, status: result };
-      if (result === 'won' && b.userId === user?.id) {
-        updateBalance(b.potentialPayout);
-      }
-      return newBet;
-    }));
+  const simulateNullAndVoid = (instanceId: string) => {
+    setInstances(prev => prev.map(i => (i.id === instanceId ? { ...i, status: 'null_and_void' } : i)));
+    // NOTE: Wallet refund on null-and-void is UNCONFIRMED per spec §8. No auto-refund applied.
   };
 
-  const getUserGroups = (userId: string) => groups.filter(g => g.members.some(m => m.id === userId));
-  const getGroupBets = (groupId: string) => groupBets.filter(b => b.groupId === groupId);
-
-  return (
-    <GroupContext.Provider value={{ groups, groupBets, groupChats, joinGroup, createGroup, sendGroupMessage, settleGroup, getUserGroups, getGroupBets }}>
-      {children}
-    </GroupContext.Provider>
+  const value = useMemo<GroupContextType>(
+    () => ({
+      games,
+      instances,
+      mySlips,
+      submitSlip,
+      getInstance,
+      getGame,
+      getSlipsForInstance,
+      simulateProceed,
+      simulateNullAndVoid,
+      estimatedPayoutRange,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [games, instances, mySlips, user],
   );
+
+  return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>;
 };
