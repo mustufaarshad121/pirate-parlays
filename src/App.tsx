@@ -25,7 +25,7 @@ import AdvancedPaymentsPage from "./pages/AdvancedPaymentsPage";
 import PersonalizationPage from "./pages/PersonalizationPage";
 import GroupingGamePage from "./pages/GroupingGamePage";
 import GroupDetailPage from "./pages/GroupDetailPage";
-import CreateGroupPage from "./pages/CreateGroupPage";
+import GameEntryPage from "./pages/GameEntryPage";
 import GroupChatPage from "./pages/GroupChatPage";
 import DMPage from "./pages/DMPage";
 import CaptainGroupsPage from "./pages/CaptainGroupsPage";
@@ -75,7 +75,7 @@ const AppRoutes = () => {
           <Route path="/payments" element={<AdvancedPaymentsPage />} />
           <Route path="/personalization" element={<PersonalizationPage />} />
           <Route path="/groups" element={<GroupingGamePage />} />
-          <Route path="/groups/create" element={<CreateGroupPage />} />
+          <Route path="/groups/game/:id" element={<GameEntryPage />} />
           <Route path="/groups/:id" element={<GroupDetailPage />} />
           <Route path="/group-chat" element={<GroupChatPage />} />
           <Route path="/messages" element={<DMPage />} />
