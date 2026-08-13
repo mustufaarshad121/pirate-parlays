@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail, Smartphone, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import pirateLogo from '@/assets/pirate-logo.png';
 
@@ -14,6 +14,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [ageVerified, setAgeVerified] = useState(false);
+  const [method, setMethod] = useState<'email' | 'mobile'>('email');
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -22,6 +25,10 @@ const Login = () => {
     e.preventDefault();
     if (!ageVerified) {
       setError('Please confirm age & KYC verification.');
+      return;
+    }
+    if (twoFactor && code.trim().length < 4) {
+      setError('Enter the 6-digit verification code (demo: any 4+ digits).');
       return;
     }
     const success = login(username, password);
@@ -73,10 +80,31 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Sign-in method */}
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { key: 'email' as const, icon: Mail, label: 'Email' },
+                { key: 'mobile' as const, icon: Smartphone, label: 'Mobile' },
+              ]).map(m => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMethod(m.key)}
+                  className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-semibold transition-colors ${
+                    method === m.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'
+                  }`}
+                >
+                  <m.icon size={14} /> {m.label}
+                </button>
+              ))}
+            </div>
+
             <div>
-              <label className="block text-sm font-semibold mb-1.5">Username</label>
+              <label className="block text-sm font-semibold mb-1.5">
+                {method === 'email' ? 'Username or Email' : 'Mobile Number'}
+              </label>
               <Input
-                placeholder="Enter username"
+                placeholder={method === 'email' ? 'Enter username or email' : 'Enter mobile number'}
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); setError(''); }}
                 className="bg-secondary border-border"
@@ -114,6 +142,29 @@ const Login = () => {
               </div>
             </div>
 
+            {/* Optional two-factor authentication (demo) */}
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  checked={twoFactor}
+                  onCheckedChange={(v) => { setTwoFactor(v === true); setError(''); }}
+                  className="mt-0.5 border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <div>
+                  <p className="text-sm font-semibold flex items-center gap-1.5"><ShieldCheck size={14} /> Two-Factor Authentication</p>
+                  <p className="text-xs text-muted-foreground">Optional. Demo only — no code is actually sent.</p>
+                </div>
+              </div>
+              {twoFactor && (
+                <Input
+                  placeholder="Enter 6-digit code"
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value); setError(''); }}
+                  className="bg-secondary border-border"
+                />
+              )}
+            </div>
+
             {error && <p className="text-destructive text-sm">{error}</p>}
 
             <Button type="submit" className="w-full gradient-primary text-primary-foreground font-bold text-base h-12 glow-green">
@@ -123,6 +174,26 @@ const Login = () => {
             <p className="text-center text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
               Forgot password?
             </p>
+
+            {/* Social sign-in (demo placeholders) */}
+            <div className="flex items-center gap-3 pt-2">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">or continue with</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {['Google', 'Facebook'].map(p => (
+                <Button
+                  key={p}
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  onClick={() => setError(`${p} sign-in is a demo placeholder. Use the demo credentials below.`)}
+                >
+                  {p}
+                </Button>
+              ))}
+            </div>
           </form>
         </div>
 
