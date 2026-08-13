@@ -46,6 +46,7 @@ const adminLinks = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/matches', icon: Calendar, label: 'Matches' },
+  { to: '/admin/grouping', icon: Anchor, label: 'Grouping' },
   { to: '/admin/transactions', icon: CreditCard, label: 'Transactions' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/admin/support', icon: Headphones, label: 'Support' },

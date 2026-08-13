@@ -64,7 +64,8 @@ export interface Notification {
   read: boolean;
 }
 
-export const SPORTS = ['All', 'Football', 'Basketball', 'Baseball', 'Hockey', 'Soccer', 'MMA'];
+// Confirmed sport scope: NFL, NBA, EPL only.
+export const SPORTS = ['All', 'NFL', 'NBA', 'EPL'];
 
 export const MATCHES: Match[] = [
   {
@@ -72,7 +73,7 @@ export const MATCHES: Match[] = [
     homeTeam: 'Tampa Bay Buccaneers',
     awayTeam: 'Kansas City Chiefs',
     league: 'NFL',
-    sport: 'Football',
+    sport: 'NFL',
     date: '2026-03-05',
     time: '8:00 PM',
     status: 'upcoming',
@@ -108,7 +109,7 @@ export const MATCHES: Match[] = [
     homeTeam: 'Los Angeles Lakers',
     awayTeam: 'Boston Celtics',
     league: 'NBA',
-    sport: 'Basketball',
+    sport: 'NBA',
     date: '2026-03-04',
     time: '7:30 PM',
     status: 'live',
@@ -142,47 +143,11 @@ export const MATCHES: Match[] = [
     ],
   },
   {
-    id: 'm3',
-    homeTeam: 'New York Yankees',
-    awayTeam: 'Houston Astros',
-    league: 'MLB',
-    sport: 'Baseball',
-    date: '2026-03-06',
-    time: '1:05 PM',
-    status: 'upcoming',
-    markets: [
-      {
-        type: 'moneyline',
-        label: 'Moneyline',
-        outcomes: [
-          { id: 'o13', label: 'Yankees', odds: 1.55 },
-          { id: 'o14', label: 'Astros', odds: 2.50 },
-        ],
-      },
-      {
-        type: 'over_under',
-        label: 'Over/Under 8.5',
-        outcomes: [
-          { id: 'o15', label: 'Over 8.5', odds: 1.85 },
-          { id: 'o16', label: 'Under 8.5', odds: 2.00 },
-        ],
-      },
-      {
-        type: 'spread',
-        label: 'Spread',
-        outcomes: [
-          { id: 'o17', label: 'Yankees -1.5', odds: 2.15 },
-          { id: 'o18', label: 'Astros +1.5', odds: 1.72 },
-        ],
-      },
-    ],
-  },
-  {
     id: 'm4',
     homeTeam: 'Manchester United',
     awayTeam: 'Liverpool',
-    league: 'Premier League',
-    sport: 'Soccer',
+    league: 'EPL',
+    sport: 'EPL',
     date: '2026-03-07',
     time: '3:00 PM',
     status: 'upcoming',
@@ -202,56 +167,6 @@ export const MATCHES: Match[] = [
         outcomes: [
           { id: 'o22', label: 'Over 2.5', odds: 1.80 },
           { id: 'o23', label: 'Under 2.5', odds: 2.05 },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'm5',
-    homeTeam: 'Connor McGregor',
-    awayTeam: 'Dustin Poirier',
-    league: 'UFC 310',
-    sport: 'MMA',
-    date: '2026-03-08',
-    time: '10:00 PM',
-    status: 'upcoming',
-    markets: [
-      {
-        type: 'moneyline',
-        label: 'Moneyline',
-        outcomes: [
-          { id: 'o24', label: 'McGregor', odds: 2.40 },
-          { id: 'o25', label: 'Poirier', odds: 1.60 },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'm6',
-    homeTeam: 'Toronto Maple Leafs',
-    awayTeam: 'Montreal Canadiens',
-    league: 'NHL',
-    sport: 'Hockey',
-    date: '2026-03-05',
-    time: '7:00 PM',
-    status: 'live',
-    homeScore: 3,
-    awayScore: 2,
-    markets: [
-      {
-        type: 'moneyline',
-        label: 'Moneyline',
-        outcomes: [
-          { id: 'o26', label: 'Maple Leafs', odds: 1.45 },
-          { id: 'o27', label: 'Canadiens', odds: 2.80 },
-        ],
-      },
-      {
-        type: 'over_under',
-        label: 'Over/Under 5.5',
-        outcomes: [
-          { id: 'o28', label: 'Over 5.5', odds: 1.95 },
-          { id: 'o29', label: 'Under 5.5', odds: 1.90 },
         ],
       },
     ],
@@ -277,11 +192,11 @@ export const DEMO_BETS: Bet[] = [
     userId: 'u1',
     items: [
       { matchId: 'm1', match: 'Buccaneers vs Chiefs', market: 'Spread', outcome: 'Chiefs -3.5', odds: 2.00, outcomeId: 'o6' },
-      { matchId: 'm3', match: 'Yankees vs Astros', market: 'Moneyline', outcome: 'Yankees', odds: 1.55, outcomeId: 'o13' },
+      { matchId: 'm4', match: 'Man United vs Liverpool', market: 'Moneyline', outcome: 'Liverpool', odds: 2.10, outcomeId: 'o21' },
     ],
     stake: 25,
-    totalOdds: 3.10,
-    payout: 77.50,
+    totalOdds: 4.20,
+    payout: 105.00,
     status: 'pending',
     placedAt: '2026-03-02T15:00:00',
     txRef: 'TX-PP-00002',

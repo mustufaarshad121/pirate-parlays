@@ -36,6 +36,7 @@ import AdminMatches from "./pages/admin/AdminMatches";
 import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSupport from "./pages/admin/AdminSupport";
+import AdminGrouping from "./pages/admin/AdminGrouping";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const AppRoutes = () => {
           <Route path="/admin/matches" element={<AdminMatches />} />
           <Route path="/admin/transactions" element={<AdminTransactions />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/grouping" element={<AdminGrouping />} />
           <Route path="/admin/support" element={<AdminSupport />} />
           <Route path="*" element={<NotFound />} />
         </Route>

@@ -30,6 +30,10 @@ export const GROUP_SIZE_OPTIONS: GroupSizeOption[] = [10, 25, 50];
 
 export type Pick = 'winner' | 'loser';
 
+// Confirmed sport scope for the Grouping Game: NFL, NBA, EPL only.
+export const GAME_SPORTS = ['NFL', 'NBA', 'EPL'] as const;
+export type GameSport = (typeof GAME_SPORTS)[number];
+
 export interface ScheduleMatch {
   id: string;
   homeTeam: string;
@@ -183,6 +187,14 @@ interface GroupContextType {
   getSlipsForInstance: (instanceId: string) => UserSlip[];
   simulateProceed: (instanceId: string) => void;
   simulateNullAndVoid: (instanceId: string) => void;
+  // Admin (Pirate Parlays operations) — system game creation & lifecycle.
+  createGame: (input: {
+    name: string;
+    sport: string;
+    entryCloses: string;
+    schedule: Omit<ScheduleMatch, 'id'>[];
+  }) => { ok: boolean; gameId?: string; error?: string };
+  closeGameEntries: (gameId: string) => void;
 }
 
 const GroupContext = createContext<GroupContextType | null>(null);
@@ -195,7 +207,7 @@ export const useGroups = () => {
 
 export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const { user, updateBalance } = useAuth();
-  const [games] = useState<SystemGame[]>(DEMO_GAMES);
+  const [games, setGames] = useState<SystemGame[]>(DEMO_GAMES);
   const [instances, setInstances] = useState<GroupInstance[]>(DEMO_INSTANCES);
   const [mySlips, setMySlips] = useState<UserSlip[]>([]);
   // NOTE: No numerical estimated-payout calculation is exposed. The client has
@@ -267,6 +279,37 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
     return { ok: true, slipId, instanceId };
   };
 
+  const createGame: GroupContextType['createGame'] = ({ name, sport, entryCloses, schedule }) => {
+    if (!name.trim()) return { ok: false, error: 'Game name is required' };
+    if (schedule.length === 0) return { ok: false, error: 'Add at least one match' };
+    const gameId = `sg-${Date.now()}`;
+    setGames(prev => [
+      {
+        id: gameId,
+        name: name.trim(),
+        sport,
+        entryCloses,
+        status: 'open',
+        schedule: schedule.map((m, idx) => ({ ...m, id: `${gameId}-m${idx + 1}` })),
+      },
+      ...prev,
+    ]);
+    return { ok: true, gameId };
+  };
+
+  // Entry cutoff: the system applies the minimum-participant rule automatically.
+  // 5+ bettors proceed; fewer than 5 is null-and-void.
+  const closeGameEntries = (gameId: string) => {
+    setGames(prev => prev.map(g => (g.id === gameId ? { ...g, status: 'closed' } : g)));
+    setInstances(prev =>
+      prev.map(i => {
+        if (i.gameId !== gameId) return i;
+        if (i.status === 'settled') return i;
+        return { ...i, status: i.memberIds.length >= 5 ? 'proceeding' : 'null_and_void' };
+      }),
+    );
+  };
+
   const getInstance = (id: string) => instances.find(i => i.id === id);
   const getGame = (id: string) => games.find(g => g.id === id);
   const getSlipsForInstance = (instanceId: string) => mySlips.filter(s => s.groupInstanceId === instanceId);
@@ -301,6 +344,8 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       getSlipsForInstance,
       simulateProceed,
       simulateNullAndVoid,
+      createGame,
+      closeGameEntries,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [games, instances, mySlips, user],
