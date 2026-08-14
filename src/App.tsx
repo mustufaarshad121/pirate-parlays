@@ -37,6 +37,9 @@ import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSupport from "./pages/admin/AdminSupport";
 import AdminGrouping from "./pages/admin/AdminGrouping";
+import AdminModeration from "./pages/admin/AdminModeration";
+import AdminPromotions from "./pages/admin/AdminPromotions";
+import AdminAdvancedAnalytics from "./pages/admin/AdminAdvancedAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +60,9 @@ const AppRoutes = () => {
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/grouping" element={<AdminGrouping />} />
           <Route path="/admin/support" element={<AdminSupport />} />
+          <Route path="/admin/moderation" element={<AdminModeration />} />
+          <Route path="/admin/promotions" element={<AdminPromotions />} />
+          <Route path="/admin/advanced-analytics" element={<AdminAdvancedAnalytics />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       ) : (
