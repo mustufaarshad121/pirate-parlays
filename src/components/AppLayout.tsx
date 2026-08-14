@@ -6,7 +6,7 @@ import {
   Home, Trophy, Wallet, Bell, Settings, LogOut,
   LayoutDashboard, Users, Calendar, CreditCard, BarChart3, Headphones,
   Receipt, User, MessageSquare, Swords, Crown, Anchor, Coins,
-  Radio, Share2, CreditCard as PaymentIcon, Sparkles, MessageCircle
+  Radio, Share2, CreditCard as PaymentIcon, Sparkles, MessageCircle, ShieldAlert, Gift
 } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -49,6 +49,9 @@ const adminLinks = [
   { to: '/admin/grouping', icon: Anchor, label: 'Grouping' },
   { to: '/admin/transactions', icon: CreditCard, label: 'Transactions' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/admin/advanced-analytics', icon: Sparkles, label: 'Advanced' },
+  { to: '/admin/moderation', icon: ShieldAlert, label: 'Moderation' },
+  { to: '/admin/promotions', icon: Gift, label: 'Promotions' },
   { to: '/admin/support', icon: Headphones, label: 'Support' },
 ];
 
