@@ -13,8 +13,9 @@ import { GroupProvider, useGroups } from '@/lib/group-context';
 
 const wrapper = ({ children }: { children: ReactNode }) => <GroupProvider>{children}</GroupProvider>;
 
-const setUser = (id: string) => {
+const setUser = (id: string, h?: { rerender: () => void }) => {
   authState.user = { ...authState.user, id, username: id };
+  h?.rerender();
 };
 
 const mount = () => renderHook(() => useGroups(), { wrapper });
@@ -22,7 +23,7 @@ const mount = () => renderHook(() => useGroups(), { wrapper });
 describe('Grouping Game', () => {
   beforeEach(() => {
     localStorage.clear();
-    setUser('u1');
+    setUser('u1', h);
   });
 
   const seedGame = (h: ReturnType<typeof mount>) => {
@@ -75,7 +76,7 @@ describe('Grouping Game', () => {
     const gameId = seedGame(h);
     const ids: string[] = [];
     ['u1', 'u2', 'u3'].forEach(u => {
-      setUser(u);
+      setUser(u, h);
       ids.push(enter(h, gameId, 10, 10));
     });
     expect(new Set(ids).size).toBe(1);
@@ -85,11 +86,11 @@ describe('Grouping Game', () => {
   it('C/D — different wager or capacity are separate grouping buckets', () => {
     const h = mount();
     const gameId = seedGame(h);
-    setUser('u1');
+    setUser('u1', h);
     const a = enter(h, gameId, 5, 10);
-    setUser('u2');
+    setUser('u2', h);
     const b = enter(h, gameId, 20, 10);
-    setUser('u3');
+    setUser('u3', h);
     const c = enter(h, gameId, 5, 25);
     expect(a).not.toBe(b);
     expect(a).not.toBe(c);
@@ -100,7 +101,7 @@ describe('Grouping Game', () => {
     const gameId = seedGame(h);
     let instanceId = '';
     ['u1', 'u2', 'u3', 'u4', 'u5'].forEach(u => {
-      setUser(u);
+      setUser(u, h);
       instanceId = enter(h, gameId, 10, 10);
     });
     act(() => h.result.current.closeGameEntries(gameId));
@@ -115,7 +116,7 @@ describe('Grouping Game', () => {
     const gameId = seedGame(h);
     let instanceId = '';
     ['u1', 'u2', 'u3', 'u4'].forEach(u => {
-      setUser(u);
+      setUser(u, h);
       instanceId = enter(h, gameId, 10, 10);
     });
     authState.updateBalance.mockClear();
@@ -128,13 +129,13 @@ describe('Grouping Game', () => {
   it('I — chat is tied to the group and rejects non-members', () => {
     const h = mount();
     const gameId = seedGame(h);
-    setUser('u1');
+    setUser('u1', h);
     const instanceId = enter(h, gameId, 10, 10);
     act(() => {
       h.result.current.sendMessage(instanceId, 'ahoy');
     });
     expect(h.result.current.getMessages(instanceId).map(m => m.text)).toEqual(['ahoy']);
-    setUser('outsider');
+    setUser('outsider', h);
     let res: { ok: boolean; error?: string } = { ok: true };
     act(() => {
       res = h.result.current.sendMessage(instanceId, 'let me in');
