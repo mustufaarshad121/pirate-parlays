@@ -23,7 +23,7 @@ const mount = () => renderHook(() => useGroups(), { wrapper });
 describe('Grouping Game', () => {
   beforeEach(() => {
     localStorage.clear();
-    setUser('u1', h);
+    setUser('u1');
   });
 
   const seedGame = (h: ReturnType<typeof mount>) => {
