@@ -28,14 +28,14 @@ const Login = () => {
       return;
     }
     if (twoFactor && code.trim().length < 4) {
-      setError('Enter the 6-digit verification code (demo: any 4+ digits).');
+      setError('Enter the 6-digit verification code.');
       return;
     }
     const success = login(username, password);
     if (success) {
       navigate('/');
     } else {
-      setError('Invalid credentials. Try demo accounts below.');
+      setError('Invalid credentials. Try one of the accounts listed below.');
     }
   };
 
@@ -49,7 +49,7 @@ const Login = () => {
       >
         <img src={pirateLogo} alt="Pirate Parlays" className="w-24 h-24 rounded-2xl mb-4 object-cover" />
         <h1 className="text-3xl font-display font-bold text-gradient">Pirate Parlays</h1>
-        <p className="text-muted-foreground text-sm mt-1">MVP Demo • No Real Money</p>
+        <p className="text-muted-foreground text-sm mt-1">MVP Preview • No Real Money</p>
       </motion.div>
 
       <motion.div
@@ -142,7 +142,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Optional two-factor authentication (demo) */}
+            {/* Optional two-factor authentication */}
             <div className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-start gap-3">
                 <Checkbox
@@ -152,7 +152,7 @@ const Login = () => {
                 />
                 <div>
                   <p className="text-sm font-semibold flex items-center gap-1.5"><ShieldCheck size={14} /> Two-Factor Authentication</p>
-                  <p className="text-xs text-muted-foreground">Optional. Demo only — no code is actually sent.</p>
+                  <p className="text-xs text-muted-foreground">Optional. No code is actually sent yet.</p>
                 </div>
               </div>
               {twoFactor && (
@@ -175,7 +175,7 @@ const Login = () => {
               Forgot password?
             </p>
 
-            {/* Social sign-in (demo placeholders) */}
+            {/* Social sign-in (not connected) */}
             <div className="flex items-center gap-3 pt-2">
               <div className="h-px flex-1 bg-border" />
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">or continue with</span>
@@ -188,7 +188,7 @@ const Login = () => {
                   type="button"
                   variant="outline"
                   className="h-11"
-                  onClick={() => setError(`${p} sign-in is a demo placeholder. Use the demo credentials below.`)}
+                  onClick={() => setError(`${p} sign-in is not connected yet. Use one of the accounts listed below.`)}
                 >
                   {p}
                 </Button>
@@ -197,7 +197,7 @@ const Login = () => {
           </form>
         </div>
 
-        {/* Demo credentials */}
+        {/* Available accounts */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -206,7 +206,7 @@ const Login = () => {
         >
           <p className="text-sm font-semibold mb-3 flex items-center gap-2">
             <span className="w-5 h-5 rounded-full border border-muted-foreground flex items-center justify-center text-xs">i</span>
-            Demo Credentials
+            Available Accounts
           </p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">

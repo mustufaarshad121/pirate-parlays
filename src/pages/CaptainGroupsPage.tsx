@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import DemoBadge from '@/components/DemoBadge';
 import { Anchor, Info, ShieldX, ChevronRight } from 'lucide-react';
 
 // Per Final Client-Confirmed Grouping Game Override (v2.0):
@@ -21,7 +20,6 @@ const CaptainGroupsPage = () => {
         <h1 className="text-2xl font-display font-bold flex items-center gap-2">
           <Anchor size={24} /> Captain Rank
         </h1>
-        <DemoBadge />
       </div>
 
       <Card className="border-warning/30 bg-warning/5">

@@ -1,4 +1,4 @@
-import { ADMIN_STATS, ADMIN_USERS, MATCHES, DEMO_TRANSACTIONS } from '@/lib/data';
+import { ADMIN_STATS, ADMIN_USERS, MATCHES, SAMPLE_TRANSACTIONS } from '@/lib/data';
 import { Users, DollarSign, TrendingUp, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 

@@ -173,7 +173,7 @@ export const MATCHES: Match[] = [
   },
 ];
 
-export const DEMO_BETS: Bet[] = [
+export const SAMPLE_BETS: Bet[] = [
   {
     id: 'b1',
     userId: 'u1',
@@ -203,7 +203,7 @@ export const DEMO_BETS: Bet[] = [
   },
 ];
 
-export const DEMO_TRANSACTIONS: Transaction[] = [
+export const SAMPLE_TRANSACTIONS: Transaction[] = [
   { id: 't1', userId: 'u1', type: 'deposit', amount: 500, status: 'completed', date: '2026-02-28', provider: 'Visa' },
   { id: 't2', userId: 'u1', type: 'deposit', amount: 1000, status: 'completed', date: '2026-03-01', provider: 'Mastercard' },
   { id: 't3', userId: 'u1', type: 'bet', amount: -50, status: 'completed', date: '2026-03-02' },
@@ -212,7 +212,7 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   { id: 't6', userId: 'u1', type: 'withdrawal', amount: -200, status: 'pending', date: '2026-03-02', provider: 'Bank Transfer' },
 ];
 
-export const DEMO_NOTIFICATIONS: Notification[] = [
+export const SAMPLE_NOTIFICATIONS: Notification[] = [
   { id: 'n1', type: 'bet_placed', title: 'Bet Placed', message: 'Your $50 bet on Lakers ML has been placed.', timestamp: '2026-03-02T14:30:00', read: false },
   { id: 'n2', type: 'promotion', title: '🏴‍☠️ Pirate Bucks Bonus!', message: 'Earn 2x Pirate Bucks on all parlays this weekend!', timestamp: '2026-03-02T10:00:00', read: false },
   { id: 'n3', type: 'match_result', title: 'Match Result', message: 'Celtics vs Heat final: 112-105. Your bet is settled.', timestamp: '2026-03-01T22:00:00', read: true },

@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useAuth } from '@/lib/auth';
 import { MOCK_FEED, type FeedPost } from '@/lib/mock-social';
 import RankBadge from '@/components/RankBadge';
-import DemoBadge from '@/components/DemoBadge';
 import { Heart, MessageCircle, Eye, Users, Send } from 'lucide-react';
 
 const CommunityFeed = () => {
@@ -54,7 +53,6 @@ const CommunityFeed = () => {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">Community Feed</h1>
-        <DemoBadge />
       </div>
 
       {/* Composer */}

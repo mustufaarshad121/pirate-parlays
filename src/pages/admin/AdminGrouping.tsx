@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { GAME_SPORTS, useGroups } from '@/lib/group-context';
-import DemoBadge from '@/components/DemoBadge';
 import { Anchor, Info, Plus, Trash2, Users, Lock } from 'lucide-react';
 
 interface DraftMatch {
@@ -56,7 +55,6 @@ const AdminGrouping = () => {
           </h1>
           <p className="text-sm text-muted-foreground">Pirate Parlays creates games. Grouping is random and system-controlled.</p>
         </div>
-        <DemoBadge />
       </div>
 
       <Card className="border-warning/30 bg-warning/5">

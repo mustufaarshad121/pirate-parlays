@@ -1,134 +1,122 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSearchParams } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
-import { MOCK_GROUPS, MOCK_GROUP_MESSAGES, type ChatMessage, MOCK_SUGGESTED_PARLAYS } from '@/lib/mock-social';
-import RankBadge from '@/components/RankBadge';
-import DemoBadge from '@/components/DemoBadge';
-import { ArrowLeft, Send, Users, Zap } from 'lucide-react';
+import { useGroups } from '@/lib/group-context';
+import { statusConfig } from './GroupingGamePage';
+import { ArrowLeft, Send, Users } from 'lucide-react';
 
+// Grouping Game chat is tied to the randomly formed group ID.
+// There is no Captain owner and no fabricated participants — the room uses the
+// actual member list of the group the signed-in user was randomly placed into.
 const GroupChatPage = () => {
   const { user } = useAuth();
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [messages, setMessages] = useState(MOCK_GROUP_MESSAGES);
+  const { myInstances, getGame, getMessages, sendMessage } = useGroups();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [input, setInput] = useState('');
 
+  const selectedId = searchParams.get('group');
+  const selected = myInstances.find(i => i.id === selectedId);
+
   const handleSend = () => {
-    if (!input.trim() || !selectedGroup) return;
-    const msg: ChatMessage = {
-      id: `gm-${Date.now()}`,
-      senderId: user!.id,
-      senderName: user!.username,
-      text: input,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages(prev => ({
-      ...prev,
-      [selectedGroup]: [...(prev[selectedGroup] || []), msg],
-    }));
-    setInput('');
+    if (!selected) return;
+    const res = sendMessage(selected.id, input);
+    if (res.ok) setInput('');
   };
 
-  if (!selectedGroup) {
+  if (!selected) {
     return (
       <div className="max-w-2xl mx-auto space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-display font-bold">Group Chat</h1>
-          <DemoBadge />
-        </div>
-        <p className="text-sm text-muted-foreground">Chat with your crew members in group rooms.</p>
+        <h1 className="text-2xl font-display font-bold">Group Chat</h1>
+        <p className="text-sm text-muted-foreground">
+          Each Grouping Game group you are randomly placed into gets its own chat room.
+        </p>
 
-        {MOCK_GROUPS.map(group => (
-          <Card key={group.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => setSelectedGroup(group.id)}>
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">{group.name}</h3>
-                  <p className="text-xs text-muted-foreground">Captain: {group.captainName} • {group.currentUsers}/{group.maxUsers} members</p>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Users size={14} />
-                  <span>{group.currentUsers}</span>
-                </div>
-              </div>
-              {messages[group.id] && (
-                <p className="text-xs text-muted-foreground mt-2 truncate">
-                  <span className="font-semibold">{messages[group.id][messages[group.id].length - 1].senderName}:</span>{' '}
-                  {messages[group.id][messages[group.id].length - 1].text}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Suggested Parlays based on group data */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2"><Zap size={16} className="text-warning" /> Suggested Props & Parlays</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-xs text-muted-foreground mb-2">Based on your group's interests</p>
-            {MOCK_SUGGESTED_PARLAYS.map(p => (
-              <div key={p.id} className="bg-secondary/50 rounded-lg p-2 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold">{p.title}</p>
-                  <p className="text-xs text-muted-foreground">{p.legs.join(' • ')}</p>
-                </div>
-                <span className="text-primary font-bold text-sm">{p.odds.toFixed(2)}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        {myInstances.length === 0 ? (
+          <Card><CardContent className="p-6 text-center space-y-1">
+            <p className="font-display font-semibold">No Group Chats Yet</p>
+            <p className="text-xs text-muted-foreground">Enter a Grouping Game to be placed into a group and unlock its chat room.</p>
+          </CardContent></Card>
+        ) : (
+          myInstances.map(inst => {
+            const game = getGame(inst.gameId);
+            const msgs = getMessages(inst.id);
+            const last = msgs[msgs.length - 1];
+            return (
+              <Card key={inst.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => setSearchParams({ group: inst.id })}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold truncate">{game?.name ?? 'Grouping Game'} · Group {inst.id.slice(-6).toUpperCase()}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        ${inst.wager} • {inst.memberIds.length} / {inst.groupSize} bettors
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="outline" className={`text-[10px] ${statusConfig[inst.status].color}`}>{statusConfig[inst.status].label}</Badge>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground"><Users size={14} />{inst.memberIds.length}</span>
+                    </div>
+                  </div>
+                  {last && (
+                    <p className="text-xs text-muted-foreground mt-2 truncate">
+                      <span className="font-semibold">{last.senderName}:</span> {last.text}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
       </div>
     );
   }
 
-  const group = MOCK_GROUPS.find(g => g.id === selectedGroup)!;
-  const groupMsgs = messages[selectedGroup] || [];
+  const game = getGame(selected.gameId);
+  const msgs = getMessages(selected.id);
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-10rem)]">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <Button variant="ghost" size="icon" onClick={() => setSelectedGroup(null)}><ArrowLeft size={20} /></Button>
-        <div>
-          <h2 className="font-display font-bold">{group.name}</h2>
-          <p className="text-xs text-muted-foreground">{group.currentUsers} members • Captain: {group.captainName}</p>
+        <Button variant="ghost" size="icon" onClick={() => setSearchParams({})}><ArrowLeft size={20} /></Button>
+        <div className="min-w-0">
+          <h2 className="font-display font-bold truncate">{game?.name ?? 'Grouping Game'} · Group {selected.id.slice(-6).toUpperCase()}</h2>
+          <p className="text-xs text-muted-foreground">{selected.memberIds.length} / {selected.groupSize} bettors • ${selected.wager}</p>
         </div>
-        <DemoBadge />
       </div>
 
-      {/* Members */}
       <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-        {group.members.map(m => (
-          <div key={m.id} className="shrink-0 flex items-center gap-1 bg-secondary/50 px-2 py-1 rounded-full">
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">{m.username.charAt(0)}</div>
-            <span className="text-xs">{m.username}</span>
-            <RankBadge rank={m.rank} />
+        {selected.memberNames.map((name, i) => (
+          <div key={selected.memberIds[i]} className="shrink-0 flex items-center gap-1 bg-secondary/50 px-2 py-1 rounded-full">
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">{name.charAt(0)}</div>
+            <span className="text-xs">{name}</span>
           </div>
         ))}
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-auto space-y-3 bg-secondary/20 rounded-lg p-3">
-        {groupMsgs.map(msg => {
-          const isMe = msg.senderId === user?.id;
-          return (
-            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[75%] rounded-lg px-3 py-2 ${isMe ? 'bg-primary text-primary-foreground' : 'bg-card border border-border'}`}>
-                {!isMe && <p className="text-xs font-semibold text-primary mb-0.5">{msg.senderName}</p>}
-                <p className="text-sm">{msg.text}</p>
-                <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
+        {msgs.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-8">No messages yet. Say hello to your group.</p>
+        ) : (
+          msgs.map(msg => {
+            const isMe = msg.senderId === user?.id;
+            return (
+              <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] rounded-lg p-2.5 ${isMe ? 'bg-primary text-primary-foreground' : 'bg-card border border-border'}`}>
+                  {!isMe && <p className="text-xs font-semibold text-primary mb-0.5">{msg.senderName}</p>}
+                  <p className="text-sm">{msg.text}</p>
+                  <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
-      {/* Input */}
       <div className="flex gap-2 mt-3">
         <Input
           value={input}

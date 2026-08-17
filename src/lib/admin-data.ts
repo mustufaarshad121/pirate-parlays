@@ -1,4 +1,4 @@
-// Admin demo records. Content is illustrative only — not confirmed production data.
+// Admin sample records. Content is illustrative only — not confirmed production data.
 
 export interface OversightUser {
   id: string;

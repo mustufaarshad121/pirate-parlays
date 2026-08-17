@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DEMO_BETS } from '@/lib/data';
-import DemoBadge from '@/components/DemoBadge';
+import { SAMPLE_BETS } from '@/lib/data';
 import { Share2, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const BetSharingPage = () => {
   const { toast } = useToast();
-  const [selectedBet, setSelectedBet] = useState<typeof DEMO_BETS[0] | null>(null);
+  const [selectedBet, setSelectedBet] = useState<typeof SAMPLE_BETS[0] | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
   const handleCopy = (text: string) => {
@@ -17,18 +16,17 @@ const BetSharingPage = () => {
     toast({ title: 'Copied!', description: 'Share text copied to clipboard.' });
   };
 
-  const shareText = (bet: typeof DEMO_BETS[0]) =>
+  const shareText = (bet: typeof SAMPLE_BETS[0]) =>
     `🏴‍☠️ Pirate Parlays\n${bet.items.map(i => `${i.match}: ${i.outcome} @ ${i.odds}`).join('\n')}\nTotal Odds: ${bet.totalOdds.toFixed(2)} | Stake: $${bet.stake}\n#PirateParlays`;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">Bet Sharing</h1>
-        <DemoBadge />
       </div>
       <p className="text-sm text-muted-foreground">Share your bets with friends on social media.</p>
 
-      {DEMO_BETS.map(bet => (
+      {SAMPLE_BETS.map(bet => (
         <Card key={bet.id} className="overflow-hidden">
           <div className="h-1 gradient-primary" />
           <CardContent className="pt-4">
@@ -96,7 +94,7 @@ const BetSharingPage = () => {
                 ))}
               </div>
               <p className="text-xs text-center text-muted-foreground">
-                ⚠️ Demo Mode: Direct sharing opens via clipboard copy. Paste in your preferred app.
+                ⚠️ Direct sharing opens via clipboard copy. Paste in your preferred app.
               </p>
             </div>
           )}

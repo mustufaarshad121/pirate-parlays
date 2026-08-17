@@ -1,36 +1,39 @@
-import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth';
 
 // ─────────────────────────────────────────────────────────────
-// PIRATE PARLAYS — GROUPING GAME v2.0
-// Per Final Client-Confirmed Override (July 13, 2026)
+// PIRATE PARLAYS — GROUPING GAME
 //
-// CONFIRMED:
-// - Pirate Parlays (system) creates games; users pick winners/losers
-// - Users fill their OWN slip
+// CONFIRMED CLIENT RULES:
+// - Pirate Parlays (system) creates games; users pick winner/loser
+// - Every user fills out their OWN individual slip (no shared slip)
 // - Wagers: $5 | $10 | $20  (fixed options)
-// - Group sizes: 10 | 25 | 50  (fixed options)
-// - Random grouping by (game + wager + group size)
-// - Minimum 5 bettors to proceed; <5 = null-and-void
-// - No Company/AI filler slips
-// - Null-and-void users get option to fill another slip
-// - Estimated payout must be visible (no final formula confirmed)
+// - Group capacities: 10 | 25 | 50  (selected capacity, not a minimum)
+// - Random, system-controlled grouping by (game + wager + capacity)
+// - Minimum 5 actual bettors to proceed; fewer than 5 = null and void
+// - No AI / company / bot filler entries — participants are real entries only
+// - Null-and-void members may fill out another slip
 //
-// REMOVED (from prior spec):
-// - Captain-created / Captain-controlled groups
-// - Shared parlay slip across group members
-// - Group activates only when full
-// - Fixed Stake × Combined Odds as final payout rule
+// NOT CONFIRMED (deliberately NOT implemented):
+// - payout formula, platform fee, winner allocation, tie handling
+// - scoring / settlement algorithm
+// - refund / carry-over behaviour of a null-and-void wager
+//
+// REMOVED:
+// - Captain-created / Captain-owned / Captain-controlled groups
+// - Shared parlay slips
+// - User-selected group joining
 // ─────────────────────────────────────────────────────────────
 
 export type WagerOption = 5 | 10 | 20;
 export type GroupSizeOption = 10 | 25 | 50;
 export const WAGER_OPTIONS: WagerOption[] = [5, 10, 20];
 export const GROUP_SIZE_OPTIONS: GroupSizeOption[] = [10, 25, 50];
+export const MINIMUM_BETTORS = 5;
 
 export type Pick = 'winner' | 'loser';
 
-// Confirmed sport scope for the Grouping Game: NFL, NBA, EPL only.
+// Confirmed sport scope: NFL, NBA, EPL only.
 export const GAME_SPORTS = ['NFL', 'NBA', 'EPL'] as const;
 export type GameSport = (typeof GAME_SPORTS)[number];
 
@@ -42,7 +45,7 @@ export interface ScheduleMatch {
   startTime: string;
 }
 
-// A "System Game" is created by Pirate Parlays. Contains a schedule of matches.
+// A game created by Pirate Parlays operations. Contains a schedule of matches.
 export interface SystemGame {
   id: string;
   name: string;
@@ -52,7 +55,7 @@ export interface SystemGame {
   schedule: ScheduleMatch[];
 }
 
-// A user's own slip (they pick winner/loser per match).
+// A user's own individual slip (winner/loser per scheduled match).
 export interface UserSlip {
   id: string;
   gameId: string;
@@ -63,119 +66,72 @@ export interface UserSlip {
   groupSize: GroupSizeOption;
   submittedAt: string;
   groupInstanceId: string;
-  refunded?: boolean; // for null-and-void cases (UI hint only; wallet rule unconfirmed)
 }
 
 export type GroupInstanceStatus =
-  | 'forming'        // waiting for more bettors / entry window open
-  | 'proceeding'     // has ≥5 bettors; will run
-  | 'null_and_void'  // <5 bettors after cutoff
-  | 'settled';       // scoring complete (unconfirmed — placeholder)
+  | 'forming'        // entry window open, waiting for participants
+  | 'proceeding'     // entries closed with 5+ actual bettors
+  | 'null_and_void'  // entries closed with fewer than 5 actual bettors
+  | 'settled';       // settlement rules pending client confirmation
 
-// A random-grouped instance: same game, same wager, same group size.
+// A randomly formed group: same game, same wager, same selected capacity.
 export interface GroupInstance {
   id: string;
   gameId: string;
   wager: WagerOption;
   groupSize: GroupSizeOption;
-  memberIds: string[];         // user IDs in this instance
-  memberNames: string[];       // parallel usernames
+  memberIds: string[];
+  memberNames: string[];
   status: GroupInstanceStatus;
   createdAt: string;
 }
 
-// ─── DEMO DATA ─────────────────────────────────────────────
+export interface GroupChatMessage {
+  id: string;
+  instanceId: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
 
-// NOTE: These game names and schedules are DEMO RECORDS ONLY.
-// The client has not provided or approved any specific game names.
-// Real game names / schedules will be supplied by Pirate Parlays operations.
-const DEMO_GAMES: SystemGame[] = [
-  {
-    id: 'sg1',
-    name: 'Demo Game A',
-    sport: 'Demo',
-    entryCloses: '2026-03-08T18:00:00',
-    status: 'open',
-    schedule: [
-      { id: 'sm1', homeTeam: 'Demo Home 1', awayTeam: 'Demo Away 1', league: 'Demo', startTime: 'Sun 1:00 PM' },
-      { id: 'sm2', homeTeam: 'Demo Home 2', awayTeam: 'Demo Away 2', league: 'Demo', startTime: 'Sun 4:25 PM' },
-      { id: 'sm3', homeTeam: 'Demo Home 3', awayTeam: 'Demo Away 3', league: 'Demo', startTime: 'Sun 4:25 PM' },
-      { id: 'sm4', homeTeam: 'Demo Home 4', awayTeam: 'Demo Away 4', league: 'Demo', startTime: 'Sun 8:20 PM' },
-      { id: 'sm5', homeTeam: 'Demo Home 5', awayTeam: 'Demo Away 5', league: 'Demo', startTime: 'Mon 8:15 PM' },
-    ],
-  },
-  {
-    id: 'sg2',
-    name: 'Demo Game B',
-    sport: 'Demo',
-    entryCloses: '2026-03-05T22:00:00',
-    status: 'open',
-    schedule: [
-      { id: 'sm6', homeTeam: 'Demo Home 6', awayTeam: 'Demo Away 6', league: 'Demo', startTime: 'Wed 7:30 PM' },
-      { id: 'sm7', homeTeam: 'Demo Home 7', awayTeam: 'Demo Away 7', league: 'Demo', startTime: 'Wed 10:00 PM' },
-      { id: 'sm8', homeTeam: 'Demo Home 8', awayTeam: 'Demo Away 8', league: 'Demo', startTime: 'Wed 8:00 PM' },
-      { id: 'sm9', homeTeam: 'Demo Home 9', awayTeam: 'Demo Away 9', league: 'Demo', startTime: 'Wed 10:00 PM' },
-    ],
-  },
-  {
-    id: 'sg3',
-    name: 'Demo Game C',
-    sport: 'Demo',
-    entryCloses: '2026-03-07T12:00:00',
-    status: 'open',
-    schedule: [
-      { id: 'sm10', homeTeam: 'Demo Home 10', awayTeam: 'Demo Away 10', league: 'Demo', startTime: 'Sat 12:30 PM' },
-      { id: 'sm11', homeTeam: 'Demo Home 11', awayTeam: 'Demo Away 11', league: 'Demo', startTime: 'Sat 3:00 PM' },
-      { id: 'sm12', homeTeam: 'Demo Home 12', awayTeam: 'Demo Away 12', league: 'Demo', startTime: 'Sun 4:30 PM' },
-    ],
-  },
-];
+// ─── PERSISTENCE (local, no fabricated records) ────────────
+const STORAGE_KEY = 'pp_grouping_state_v3';
 
-const DEMO_INSTANCES: GroupInstance[] = [
-  {
-    id: 'gi1', gameId: 'sg1', wager: 10, groupSize: 10,
-    memberIds: ['u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u10', 'u11'],
-    memberNames: ['JackSparrow22', 'BlackBeard', 'ParlayKing', 'OddsShark', 'BetMaster99', 'TreasureHunter', 'DeadMansHand', 'SeaDog77', 'CannonBall', 'RumRunner'],
-    status: 'proceeding', createdAt: '2026-03-04T08:00:00',
-  },
-  {
-    id: 'gi2', gameId: 'sg1', wager: 20, groupSize: 10,
-    memberIds: ['u2', 'u4', 'u5', 'u6', 'u7', 'u8'],
-    memberNames: ['JackSparrow22', 'ParlayKing', 'OddsShark', 'BetMaster99', 'TreasureHunter', 'DeadMansHand'],
-    status: 'proceeding', createdAt: '2026-03-04T09:15:00',
-  },
-  {
-    id: 'gi3', gameId: 'sg1', wager: 5, groupSize: 10,
-    memberIds: ['u3', 'u9', 'u10'],
-    memberNames: ['BlackBeard', 'SeaDog77', 'CannonBall'],
-    status: 'null_and_void', createdAt: '2026-03-03T14:00:00',
-  },
-  {
-    id: 'gi4', gameId: 'sg2', wager: 20, groupSize: 25,
-    memberIds: Array.from({ length: 25 }, (_, i) => `demo-u${i + 20}`),
-    memberNames: Array.from({ length: 25 }, (_, i) => `Bettor${i + 1}`),
-    status: 'proceeding', createdAt: '2026-03-04T10:00:00',
-  },
-  {
-    id: 'gi5', gameId: 'sg2', wager: 10, groupSize: 50,
-    memberIds: Array.from({ length: 34 }, (_, i) => `demo-u${i + 100}`),
-    memberNames: Array.from({ length: 34 }, (_, i) => `Bettor${i + 40}`),
-    status: 'forming', createdAt: '2026-03-05T06:00:00',
-  },
-];
+interface PersistedState {
+  games: SystemGame[];
+  instances: GroupInstance[];
+  slips: UserSlip[];
+  messages: GroupChatMessage[];
+}
+
+const emptyState: PersistedState = { games: [], instances: [], slips: [], messages: [] };
+
+const loadState = (): PersistedState => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return emptyState;
+    const parsed = JSON.parse(raw) as Partial<PersistedState>;
+    return {
+      games: parsed.games ?? [],
+      instances: parsed.instances ?? [],
+      slips: parsed.slips ?? [],
+      messages: parsed.messages ?? [],
+    };
+  } catch {
+    return emptyState;
+  }
+};
 
 // ─── CONTEXT ───────────────────────────────────────────────
 
-// Dev-only flag — flip to true ONLY in a private development/demo environment
-// to expose the "Simulate → Proceeds / Null & Void" walkthrough controls.
-// These are NOT confirmed production Admin controls. In real flow, the system
-// enforces the minimum-participant rule automatically at entry cutoff.
-export const DEV_DEMO_CONTROLS_ENABLED = false;
-
 interface GroupContextType {
   games: SystemGame[];
+  openGames: SystemGame[];
   instances: GroupInstance[];
+  slips: UserSlip[];
   mySlips: UserSlip[];
+  myInstances: GroupInstance[];
   submitSlip: (input: {
     gameId: string;
     picks: Record<string, Pick>;
@@ -184,10 +140,10 @@ interface GroupContextType {
   }) => { ok: boolean; slipId?: string; instanceId?: string; error?: string };
   getInstance: (id: string) => GroupInstance | undefined;
   getGame: (id: string) => SystemGame | undefined;
-  getSlipsForInstance: (instanceId: string) => UserSlip[];
-  simulateProceed: (instanceId: string) => void;
-  simulateNullAndVoid: (instanceId: string) => void;
-  // Admin (Pirate Parlays operations) — system game creation & lifecycle.
+  getSlipForInstance: (instanceId: string, userId: string) => UserSlip | undefined;
+  getMessages: (instanceId: string) => GroupChatMessage[];
+  sendMessage: (instanceId: string, text: string) => { ok: boolean; error?: string };
+  // Pirate Parlays operations (admin) — game creation & entry lifecycle only.
   createGame: (input: {
     name: string;
     sport: string;
@@ -207,64 +163,47 @@ export const useGroups = () => {
 
 export const GroupProvider = ({ children }: { children: ReactNode }) => {
   const { user, updateBalance } = useAuth();
-  const [games, setGames] = useState<SystemGame[]>(DEMO_GAMES);
-  const [instances, setInstances] = useState<GroupInstance[]>(DEMO_INSTANCES);
-  const [mySlips, setMySlips] = useState<UserSlip[]>([]);
-  // NOTE: No numerical estimated-payout calculation is exposed. The client has
-  // not confirmed the payout formula, platform fee, winner allocation, or tie
-  // handling. UI shows a non-numerical placeholder instead.
+  const [state, setState] = useState<PersistedState>(() => loadState());
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage unavailable — in-memory only */
+    }
+  }, [state]);
+
+  const { games, instances, slips, messages } = state;
+
+  // ── RANDOM GROUPING ──────────────────────────────────────
+  // Placement is system-controlled. The user never sees or selects a group.
+  // Eligible groups share the same game + wager + selected capacity, are still
+  // forming, have room, and do not already contain the user. One is chosen at
+  // random; if none exists the system opens a new group.
   const submitSlip: GroupContextType['submitSlip'] = ({ gameId, picks, wager, groupSize }) => {
     if (!user) return { ok: false, error: 'Not signed in' };
+    const game = games.find(g => g.id === gameId);
+    if (!game) return { ok: false, error: 'Game not found' };
+    if (game.status !== 'open') return { ok: false, error: 'Entries are closed for this game' };
+    if (game.schedule.some(m => !picks[m.id])) return { ok: false, error: 'Make a selection for every scheduled match' };
     if (user.balance < wager) return { ok: false, error: 'Insufficient balance' };
 
-    // Random grouping: find an OPEN instance matching game+wager+groupSize with room.
-    let target = instances.find(
+    const eligible = instances.filter(
       i =>
         i.gameId === gameId &&
         i.wager === wager &&
         i.groupSize === groupSize &&
-        (i.status === 'forming' || i.status === 'proceeding') &&
+        i.status === 'forming' &&
         i.memberIds.length < i.groupSize &&
         !i.memberIds.includes(user.id),
     );
 
     const now = new Date().toISOString();
-    let instanceId: string;
+    const target = eligible.length > 0 ? eligible[Math.floor(Math.random() * eligible.length)] : undefined;
+    const instanceId = target ? target.id : `gi-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
-    if (!target) {
-      // No matching instance — Pirate Parlays opens a new random-grouped instance.
-      instanceId = `gi-${Date.now()}`;
-      const newInstance: GroupInstance = {
-        id: instanceId,
-        gameId,
-        wager,
-        groupSize,
-        memberIds: [user.id],
-        memberNames: [user.username],
-        status: 'forming',
-        createdAt: now,
-      };
-      setInstances(prev => [newInstance, ...prev]);
-    } else {
-      instanceId = target.id;
-      setInstances(prev =>
-        prev.map(i => {
-          if (i.id !== instanceId) return i;
-          const memberIds = [...i.memberIds, user.id];
-          const memberNames = [...i.memberNames, user.username];
-          const nextStatus: GroupInstanceStatus = memberIds.length >= 5 ? 'proceeding' : 'forming';
-          return { ...i, memberIds, memberNames, status: nextStatus };
-        }),
-      );
-    }
-
-    // Deduct wager
-    updateBalance(-wager);
-
-    const slipId = `slip-${Date.now()}`;
     const slip: UserSlip = {
-      id: slipId,
+      id: `slip-${Date.now()}`,
       gameId,
       userId: user.id,
       username: user.username,
@@ -274,81 +213,122 @@ export const GroupProvider = ({ children }: { children: ReactNode }) => {
       submittedAt: now,
       groupInstanceId: instanceId,
     };
-    setMySlips(prev => [slip, ...prev]);
 
-    return { ok: true, slipId, instanceId };
+    setState(prev => {
+      const nextInstances = target
+        ? prev.instances.map(i =>
+            i.id === instanceId
+              ? { ...i, memberIds: [...i.memberIds, user.id], memberNames: [...i.memberNames, user.username] }
+              : i,
+          )
+        : [
+            {
+              id: instanceId,
+              gameId,
+              wager,
+              groupSize,
+              memberIds: [user.id],
+              memberNames: [user.username],
+              status: 'forming' as GroupInstanceStatus,
+              createdAt: now,
+            },
+            ...prev.instances,
+          ];
+      return { ...prev, instances: nextInstances, slips: [slip, ...prev.slips] };
+    });
+
+    updateBalance(-wager);
+    return { ok: true, slipId: slip.id, instanceId };
   };
 
   const createGame: GroupContextType['createGame'] = ({ name, sport, entryCloses, schedule }) => {
     if (!name.trim()) return { ok: false, error: 'Game name is required' };
     if (schedule.length === 0) return { ok: false, error: 'Add at least one match' };
     const gameId = `sg-${Date.now()}`;
-    setGames(prev => [
-      {
-        id: gameId,
-        name: name.trim(),
-        sport,
-        entryCloses,
-        status: 'open',
-        schedule: schedule.map((m, idx) => ({ ...m, id: `${gameId}-m${idx + 1}` })),
-      },
+    setState(prev => ({
       ...prev,
-    ]);
+      games: [
+        {
+          id: gameId,
+          name: name.trim(),
+          sport,
+          entryCloses,
+          status: 'open',
+          schedule: schedule.map((m, idx) => ({ ...m, id: `${gameId}-m${idx + 1}` })),
+        },
+        ...prev.games,
+      ],
+    }));
     return { ok: true, gameId };
   };
 
-  // Entry cutoff: the system applies the minimum-participant rule automatically.
-  // 5+ bettors proceed; fewer than 5 is null-and-void.
+  // ── MINIMUM-PARTICIPATION RULE ───────────────────────────
+  // At the game's start boundary the system evaluates every group of that game:
+  // 5 or more actual bettors → proceeding; fewer than 5 → null and void.
+  // No filler entries are ever generated.
   const closeGameEntries = (gameId: string) => {
-    setGames(prev => prev.map(g => (g.id === gameId ? { ...g, status: 'closed' } : g)));
-    setInstances(prev =>
-      prev.map(i => {
+    setState(prev => ({
+      ...prev,
+      games: prev.games.map(g => (g.id === gameId ? { ...g, status: 'closed' } : g)),
+      instances: prev.instances.map(i => {
         if (i.gameId !== gameId) return i;
         if (i.status === 'settled') return i;
-        return { ...i, status: i.memberIds.length >= 5 ? 'proceeding' : 'null_and_void' };
+        return { ...i, status: i.memberIds.length >= MINIMUM_BETTORS ? 'proceeding' : 'null_and_void' };
       }),
-    );
+    }));
   };
 
   const getInstance = (id: string) => instances.find(i => i.id === id);
   const getGame = (id: string) => games.find(g => g.id === id);
-  const getSlipsForInstance = (instanceId: string) => mySlips.filter(s => s.groupInstanceId === instanceId);
+  const getSlipForInstance = (instanceId: string, userId: string) =>
+    slips.find(s => s.groupInstanceId === instanceId && s.userId === userId);
+  const getMessages = (instanceId: string) =>
+    messages
+      .filter(m => m.instanceId === instanceId)
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
-  // DEMO controls — let clients see both outcomes visually
-  const simulateProceed = (instanceId: string) => {
-    setInstances(prev =>
-      prev.map(i => {
-        if (i.id !== instanceId) return i;
-        // Add filler demo names (labeled clearly as demo) to reach at least 5
-        const needed = Math.max(0, 5 - i.memberIds.length);
-        const memberIds = [...i.memberIds, ...Array.from({ length: needed }, (_, k) => `demo-fill-${k}`)];
-        const memberNames = [...i.memberNames, ...Array.from({ length: needed }, (_, k) => `Bettor${100 + k}`)];
-        return { ...i, memberIds, memberNames, status: 'proceeding' };
-      }),
-    );
+  // Chat is tied to the randomly formed group. Only actual members can post.
+  const sendMessage: GroupContextType['sendMessage'] = (instanceId, text) => {
+    if (!user) return { ok: false, error: 'Not signed in' };
+    const instance = instances.find(i => i.id === instanceId);
+    if (!instance) return { ok: false, error: 'Group not found' };
+    if (!instance.memberIds.includes(user.id)) return { ok: false, error: 'You are not in this group' };
+    if (!text.trim()) return { ok: false, error: 'Empty message' };
+    const msg: GroupChatMessage = {
+      id: `gm-${Date.now()}`,
+      instanceId,
+      senderId: user.id,
+      senderName: user.username,
+      text: text.trim(),
+      timestamp: new Date().toISOString(),
+    };
+    setState(prev => ({ ...prev, messages: [...prev.messages, msg] }));
+    return { ok: true };
   };
 
-  const simulateNullAndVoid = (instanceId: string) => {
-    setInstances(prev => prev.map(i => (i.id === instanceId ? { ...i, status: 'null_and_void' } : i)));
-    // NOTE: Wallet refund on null-and-void is UNCONFIRMED per spec §8. No auto-refund applied.
-  };
+  const openGames = games.filter(g => g.status === 'open');
+  const mySlips = user ? slips.filter(s => s.userId === user.id) : [];
+  const myInstances = user ? instances.filter(i => i.memberIds.includes(user.id)) : [];
 
   const value = useMemo<GroupContextType>(
     () => ({
       games,
+      openGames,
       instances,
+      slips,
       mySlips,
+      myInstances,
       submitSlip,
       getInstance,
       getGame,
-      getSlipsForInstance,
-      simulateProceed,
-      simulateNullAndVoid,
+      getSlipForInstance,
+      getMessages,
+      sendMessage,
       createGame,
       closeGameEntries,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [games, instances, mySlips, user],
+    [state, user],
   );
 
   return <GroupContext.Provider value={value}>{children}</GroupContext.Provider>;

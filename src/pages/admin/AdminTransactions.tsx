@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { DEMO_TRANSACTIONS, Transaction } from '@/lib/data';
+import { SAMPLE_TRANSACTIONS, Transaction } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import DemoBadge from '@/components/DemoBadge';
 
 type TypeFilter = 'all' | 'deposit' | 'withdrawal' | 'bet' | 'payout';
 type StatusFilter = 'all' | 'completed' | 'pending' | 'failed' | 'flagged';
@@ -13,7 +12,7 @@ interface AdminTx extends Omit<Transaction, 'status'> {
 
 const AdminTransactions = () => {
   const { toast } = useToast();
-  const [txns, setTxns] = useState<AdminTx[]>(DEMO_TRANSACTIONS);
+  const [txns, setTxns] = useState<AdminTx[]>(SAMPLE_TRANSACTIONS);
   const [type, setType] = useState<TypeFilter>('all');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [from, setFrom] = useState('');
@@ -41,7 +40,6 @@ const AdminTransactions = () => {
     <div className="max-w-6xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-xl">Transaction Management</h1>
-        <DemoBadge />
       </div>
 
       <div className="space-y-2">

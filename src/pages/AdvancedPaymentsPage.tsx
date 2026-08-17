@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { MOCK_PAYMENT_METHODS, type PaymentMethod } from '@/lib/mock-social';
-import DemoBadge from '@/components/DemoBadge';
 import { CreditCard, Check, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,12 +21,11 @@ const AdvancedPaymentsPage = () => {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">Payment Methods</h1>
-        <DemoBadge label="Demo Mode — Not connected" />
       </div>
 
       <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex items-start gap-2">
         <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
-        <p className="text-xs text-warning">Demo Mode: Payment providers are not connected yet. Preferences are saved locally.</p>
+        <p className="text-xs text-warning">Not connected: payment providers are not connected yet. Preferences are saved locally.</p>
       </div>
 
       <Card>

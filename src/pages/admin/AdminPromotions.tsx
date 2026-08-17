@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import DemoBadge from '@/components/DemoBadge';
 import { Gift } from 'lucide-react';
 
 const AdminPromotions = () => {
@@ -40,7 +39,6 @@ const AdminPromotions = () => {
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-xl flex items-center gap-2"><Gift size={20} /> Promotions</h1>
-        <DemoBadge />
       </div>
 
       <Card>
