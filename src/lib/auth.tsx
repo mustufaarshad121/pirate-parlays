@@ -18,7 +18,7 @@ interface AuthContextType {
   updateBalance: (amount: number) => void;
 }
 
-const DEMO_USERS: { username: string; password: string; user: User }[] = [
+const ACCOUNTS: { username: string; password: string; user: User }[] = [
   {
     username: 'user1',
     password: '1234U',
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
 
   const login = useCallback((username: string, password: string) => {
-    const found = DEMO_USERS.find(
+    const found = ACCOUNTS.find(
       (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
     );
     if (found) {

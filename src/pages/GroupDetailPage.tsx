@@ -3,17 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
-import { useGroups, DEV_DEMO_CONTROLS_ENABLED } from '@/lib/group-context';
-import DemoBadge from '@/components/DemoBadge';
+import { useGroups, MINIMUM_BETTORS } from '@/lib/group-context';
 import { statusConfig } from './GroupingGamePage';
 import {
-  AlertCircle,
   ArrowLeft,
   CheckCircle2,
   ChevronRight,
   Dice5,
   DollarSign,
   Info,
+  MessageSquare,
   ShieldX,
   Users,
 } from 'lucide-react';
@@ -22,41 +21,46 @@ const GroupDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getInstance, getGame, simulateProceed, simulateNullAndVoid, mySlips } = useGroups();
+  const { getInstance, getGame, getSlipForInstance } = useGroups();
 
   const instance = id ? getInstance(id) : undefined;
   if (!instance) {
     return (
       <div className="text-center py-20 text-muted-foreground">
-        Group not found. <Button variant="link" onClick={() => navigate('/groups')}>Back to Games</Button>
+        Group not found. <Button variant="link" onClick={() => navigate('/groups')}>Back to Grouping Game</Button>
       </div>
     );
   }
-  const game = getGame(instance.gameId)!;
+  const game = getGame(instance.gameId);
   const isMember = user ? instance.memberIds.includes(user.id) : false;
-  const mySlip = mySlips.find(s => s.groupInstanceId === instance.id);
+  const mySlip = user ? getSlipForInstance(instance.id, user.id) : undefined;
   const cfg = statusConfig[instance.status];
-  const spotsLeft = Math.max(0, instance.groupSize - instance.memberIds.length);
-  const minMet = instance.memberIds.length >= 5;
+  const minMet = instance.memberIds.length >= MINIMUM_BETTORS;
+
+  if (!isMember) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 text-center space-y-3">
+        <p className="text-sm text-muted-foreground">You are not a member of this group.</p>
+        <Button onClick={() => navigate('/groups')}>Back to Grouping Game</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-24">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate('/groups')}>
           <ArrowLeft size={20} />
         </Button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-display font-bold truncate">{game.name}</h1>
+            <h1 className="text-xl font-display font-bold truncate">{game?.name ?? 'Grouping Game'}</h1>
             <Badge variant="outline" className={`text-[10px] ${cfg.color}`}>{cfg.label}</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">Randomly grouped by Pirate Parlays</p>
+          <p className="text-xs text-muted-foreground">Group {instance.id.slice(-6).toUpperCase()} • randomly formed by Pirate Parlays</p>
         </div>
-        <DemoBadge />
       </div>
 
-      {/* Key stats */}
       <div className="grid grid-cols-3 gap-2">
         <Card><CardContent className="p-3 text-center">
           <DollarSign size={14} className="mx-auto text-muted-foreground mb-1" />
@@ -65,26 +69,25 @@ const GroupDetailPage = () => {
         </CardContent></Card>
         <Card><CardContent className="p-3 text-center">
           <Users size={14} className="mx-auto text-muted-foreground mb-1" />
-          <p className="text-sm font-bold">{instance.memberIds.length}/{instance.groupSize}</p>
+          <p className="text-sm font-bold">{instance.memberIds.length} / {instance.groupSize}</p>
           <p className="text-[10px] text-muted-foreground">Bettors</p>
         </CardContent></Card>
         <Card><CardContent className="p-3 text-center">
           <Dice5 size={14} className="mx-auto text-muted-foreground mb-1" />
           <p className="text-sm font-bold">{instance.groupSize}</p>
-          <p className="text-[10px] text-muted-foreground">Max Size</p>
+          <p className="text-[10px] text-muted-foreground">Selected capacity</p>
         </CardContent></Card>
       </div>
 
-      {/* Status banner */}
       {instance.status === 'forming' && (
         <div className="bg-secondary/50 border border-border rounded-lg p-3 text-sm flex items-start gap-2">
           {minMet ? (
             <>
               <CheckCircle2 size={16} className="text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">Minimum met</p>
+                <p className="font-semibold">Minimum reached</p>
                 <p className="text-xs text-muted-foreground">
-                  {instance.memberIds.length} bettors joined — group can proceed. Still accepting up to {spotsLeft} more.
+                  {instance.memberIds.length} bettors have entered — this group can proceed at the game's start boundary. Still open to more entries.
                 </p>
               </div>
             </>
@@ -92,9 +95,9 @@ const GroupDetailPage = () => {
             <>
               <Info size={16} className="text-warning shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">Waiting for more bettors</p>
+                <p className="font-semibold">Waiting for bettors</p>
                 <p className="text-xs text-muted-foreground">
-                  Need <span className="text-primary font-semibold">{5 - instance.memberIds.length}</span> more to reach the minimum of 5. If fewer than 5 by entry cutoff, this group is null-and-void.
+                  <span className="text-primary font-semibold">{MINIMUM_BETTORS - instance.memberIds.length}</span> more actual entries are needed to reach the minimum of {MINIMUM_BETTORS}. If fewer than {MINIMUM_BETTORS} at the start boundary, this group is null and void.
                 </p>
               </div>
             </>
@@ -107,7 +110,7 @@ const GroupDetailPage = () => {
           <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold text-emerald-400">Proceeding</p>
-            <p className="text-xs text-muted-foreground">This group has the required minimum. Scoring & payout rules are pending final client confirmation (not implemented in demo).</p>
+            <p className="text-xs text-muted-foreground">This group met the {MINIMUM_BETTORS}-bettor minimum. Scoring and payout rules are pending client confirmation.</p>
           </div>
         </div>
       )}
@@ -120,41 +123,36 @@ const GroupDetailPage = () => {
               <div>
                 <p className="font-semibold text-destructive">Null and Void</p>
                 <p className="text-xs text-muted-foreground">
-                  Fewer than 5 bettors joined this group. Per Pirate Parlays rules, Pirate Parlays and AI do not fill missing slips.
+                  Fewer than {MINIMUM_BETTORS} bettors entered this group. Pirate Parlays does not fill missing entries.
                 </p>
                 <p className="text-[11px] text-warning mt-1">
-                  ⚠️ Wallet handling for null-and-void groups (refund, credit, or forfeiture) is unconfirmed. No automatic refund, transfer, or wager carry-over is applied.
+                  Handling of the original wager is not yet confirmed. No automatic refund, transfer, or carry-over has been applied.
                 </p>
               </div>
             </div>
             <Button className="w-full" onClick={() => navigate('/groups')}>
-              Fill out another slip <ChevronRight size={14} className="ml-1" />
+              Fill Out Another Slip <ChevronRight size={14} className="ml-1" />
             </Button>
-            <p className="text-[11px] text-muted-foreground text-center">
-              Filling another slip requires a new wager. It does not reuse the original wager and is not restricted to the same game — rules pending client confirmation.
-            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Estimated payout — non-numerical placeholder */}
+      {/* Estimated cash payout */}
       <Card className="border-warning/30 bg-warning/5">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm">Estimated Payout</CardTitle>
+          <CardTitle className="text-sm">Estimated Cash Payout</CardTitle>
           <Badge variant="outline" className="text-[10px] border-warning/40 text-warning">Pending</Badge>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-foreground">
-            Estimated payout pending final payout formula confirmation.
-          </p>
+          <p className="text-sm text-foreground">Estimated payout pending final payout formula confirmation.</p>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Payout formula, platform fee, winner allocation, and tie handling have not been confirmed by the client. No amounts are calculated or displayed.
+            No payout calculation, platform fee, winner allocation, or tie handling has been configured, so no amount is displayed here.
           </p>
         </CardContent>
       </Card>
 
-      {/* My slip */}
-      {isMember && mySlip && (
+      {/* My own slip */}
+      {mySlip && game && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Your Slip</CardTitle></CardHeader>
           <CardContent className="space-y-1.5">
@@ -162,13 +160,14 @@ const GroupDetailPage = () => {
               const p = mySlip.picks[m.id];
               return (
                 <div key={m.id} className="flex items-center justify-between text-xs bg-secondary/30 rounded p-2">
-                  <span className="text-muted-foreground">{i + 1}. {m.homeTeam} vs {m.awayTeam}</span>
+                  <span className="text-muted-foreground truncate">{i + 1}. {m.homeTeam} vs {m.awayTeam}</span>
                   <Badge variant="outline" className={`text-[10px] ${p === 'winner' ? 'border-primary/40 text-primary' : 'border-destructive/40 text-destructive'}`}>
                     {p === 'winner' ? 'Winner' : 'Loser'}
                   </Badge>
                 </div>
               );
             })}
+            <p className="text-[11px] text-muted-foreground pt-1">Each member of this group keeps their own separate slip.</p>
           </CardContent>
         </Card>
       )}
@@ -176,14 +175,14 @@ const GroupDetailPage = () => {
       {/* Members */}
       <Card>
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm">Random Group Members</CardTitle>
-          <span className="text-xs text-muted-foreground">{instance.memberIds.length} total</span>
+          <CardTitle className="text-sm">Group Members</CardTitle>
+          <span className="text-xs text-muted-foreground">{instance.memberIds.length} / {instance.groupSize} bettors</span>
         </CardHeader>
         <CardContent className="space-y-1.5">
           {instance.memberNames.map((name, i) => {
             const isMe = user && instance.memberIds[i] === user.id;
             return (
-              <div key={i} className="flex items-center gap-2 bg-secondary/30 rounded p-2">
+              <div key={instance.memberIds[i]} className="flex items-center gap-2 bg-secondary/30 rounded p-2">
                 <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold">
                   {name.charAt(0)}
                 </div>
@@ -192,44 +191,12 @@ const GroupDetailPage = () => {
               </div>
             );
           })}
-          {spotsLeft > 0 && (
-            <div className="border border-dashed border-border rounded p-2 text-center text-xs text-muted-foreground">
-              {spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} still open
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Dev-only demo controls — hidden unless DEV_DEMO_CONTROLS_ENABLED */}
-      {DEV_DEMO_CONTROLS_ENABLED && instance.status === 'forming' && (
-        <Card className="border-warning/30">
-          <CardContent className="p-4 space-y-2">
-            <p className="text-xs text-warning flex items-center gap-1">
-              <AlertCircle size={12} /> Dev-only walkthrough controls — not a production Admin feature. In real flow, the system enforces the 5-bettor minimum automatically at entry cutoff.
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" variant="outline" onClick={() => simulateProceed(instance.id)}>
-                Simulate → Proceeds
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => simulateNullAndVoid(instance.id)}>
-                Simulate → Null &amp; Void
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Not a member */}
-      {!isMember && (
-        <Card className="border-primary/30">
-          <CardContent className="p-4 space-y-2 text-center">
-            <p className="text-sm text-muted-foreground">You're not in this group.</p>
-            <Button className="w-full" onClick={() => navigate(`/groups/game/${instance.gameId}`)}>
-              Submit your own slip for {game.name}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <Button variant="outline" className="w-full" onClick={() => navigate(`/group-chat?group=${instance.id}`)}>
+        <MessageSquare size={14} className="mr-1" /> Open group chat
+      </Button>
     </div>
   );
 };

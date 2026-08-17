@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import DemoBadge from '@/components/DemoBadge';
 import { Headphones } from 'lucide-react';
 
 const statusStyle: Record<Ticket['status'], string> = {
@@ -41,7 +40,6 @@ const AdminSupport = () => {
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-xl flex items-center gap-2"><Headphones size={20} /> Support Portal</h1>
-        <DemoBadge />
       </div>
 
       <Tabs defaultValue="tickets">

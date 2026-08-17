@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DEMO_NOTIFICATIONS } from '@/lib/data';
+import { SAMPLE_NOTIFICATIONS } from '@/lib/data';
 import { Bell, Trophy, Gift, Zap } from 'lucide-react';
 
 const iconMap: Record<string, JSX.Element> = {
@@ -10,7 +10,7 @@ const iconMap: Record<string, JSX.Element> = {
 };
 
 const Notifications = () => {
-  const [notifications] = useState(DEMO_NOTIFICATIONS);
+  const [notifications] = useState(SAMPLE_NOTIFICATIONS);
 
   return (
     <div className="max-w-lg mx-auto">

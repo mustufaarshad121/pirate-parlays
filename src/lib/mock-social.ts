@@ -82,18 +82,6 @@ export interface LeaderboardEntry {
   winRate: number;
 }
 
-export interface Group {
-  id: string;
-  name: string;
-  captainId: string;
-  captainName: string;
-  dollarPreference: string;
-  maxUsers: number;
-  currentUsers: number;
-  joinCriteria: string;
-  members: { id: string; username: string; rank: PirateRank }[];
-}
-
 export interface ChatMessage {
   id: string;
   senderId: string;
@@ -254,43 +242,6 @@ export const MOCK_LEADERBOARD: LeaderboardEntry[] = [
   { rank: 9, username: 'user1', avatar: '', pirateRank: 'Pilot', xp: 4850, winStreak: 7, winRate: 62.3 },
   { rank: 10, username: 'RumRunner', avatar: '', pirateRank: 'Crew member', xp: 3200, winStreak: 1, winRate: 48.5 },
 ];
-
-export const MOCK_GROUPS: Group[] = [
-  {
-    id: 'g1', name: 'Sparrow\'s Fleet', captainId: 'u2', captainName: 'JackSparrow22',
-    dollarPreference: '$25 - $100 per bet', maxUsers: 10, currentUsers: 7,
-    joinCriteria: 'Min 50 bets placed. Win rate above 55%. Active last 7 days.',
-    members: [
-      { id: 'u2', username: 'JackSparrow22', rank: 'Captain' },
-      { id: 'u4', username: 'ParlayKing', rank: 'First mate' },
-      { id: 'u1', username: 'user1', rank: 'Pilot' },
-      { id: 'u5', username: 'OddsShark', rank: 'Deck hand' },
-    ],
-  },
-  {
-    id: 'g2', name: 'High Rollers Crew', captainId: 'u5', captainName: 'OddsShark',
-    dollarPreference: '$100 - $500 per bet', maxUsers: 5, currentUsers: 3,
-    joinCriteria: 'Minimum balance $500. Verified KYC required.',
-    members: [
-      { id: 'u5', username: 'OddsShark', rank: 'Captain' },
-      { id: 'u2', username: 'JackSparrow22', rank: 'First mate' },
-    ],
-  },
-];
-
-export const MOCK_GROUP_MESSAGES: Record<string, ChatMessage[]> = {
-  g1: [
-    { id: 'gm1', senderId: 'u2', senderName: 'JackSparrow22', text: 'Tonight\'s NFL slate looks juicy! 🏈', timestamp: '2026-03-03T14:00:00' },
-    { id: 'gm2', senderId: 'u4', senderName: 'ParlayKing', text: 'I\'m eyeing Chiefs -3.5. What do you guys think?', timestamp: '2026-03-03T14:05:00' },
-    { id: 'gm3', senderId: 'u1', senderName: 'user1', text: 'Chiefs are solid but Bucs at home could be tricky', timestamp: '2026-03-03T14:10:00' },
-    { id: 'gm4', senderId: 'u5', senderName: 'OddsShark', text: 'Over 48.5 is the play. Both offenses are rolling 🔥', timestamp: '2026-03-03T14:15:00' },
-    { id: 'gm5', senderId: 'u2', senderName: 'JackSparrow22', text: 'Building a 3-legger: Chiefs ML + Over 48.5 + Lakers ML. Who\'s tailing?', timestamp: '2026-03-03T14:20:00' },
-  ],
-  g2: [
-    { id: 'gm6', senderId: 'u5', senderName: 'OddsShark', text: 'Big day tomorrow. I\'m putting $200 on Yankees ML.', timestamp: '2026-03-03T12:00:00' },
-    { id: 'gm7', senderId: 'u2', senderName: 'JackSparrow22', text: 'Smart play. Astros pitching has been weak lately.', timestamp: '2026-03-03T12:30:00' },
-  ],
-};
 
 export const MOCK_DM_THREADS: DMThread[] = [
   { id: 'dm1', recipientId: 'u2', recipientName: 'JackSparrow22', recipientAvatar: '', lastMessage: 'Nice hit on that parlay! 🔥', lastTime: '2h ago', unread: 2 },

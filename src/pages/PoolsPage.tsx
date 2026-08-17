@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MOCK_POOLS, type Pool } from '@/lib/mock-social';
-import DemoBadge from '@/components/DemoBadge';
 import { Users, Trophy, DollarSign, Lock, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,7 +59,6 @@ const PoolsPage = () => {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">Challenges & Pools</h1>
-        <DemoBadge />
       </div>
       <Tabs defaultValue="public">
         <TabsList className="w-full">

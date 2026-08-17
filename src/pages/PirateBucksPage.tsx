@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CURRENT_PROFILE, MOCK_PIRATE_BUCKS_HISTORY, MOCK_REDEMPTION_ITEMS, type RedemptionItem } from '@/lib/mock-social';
-import DemoBadge from '@/components/DemoBadge';
 import { Coins, ArrowUp, ArrowDown, ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,7 +23,7 @@ const PirateBucksPage = () => {
       { id: `pb-${Date.now()}`, type: 'spent', amount: -item.cost, description: `Redeemed: ${item.name}`, date: new Date().toISOString().split('T')[0] },
       ...prev,
     ]);
-    toast({ title: 'Redeemed! 🏴‍☠️', description: `${item.name} has been redeemed (demo).` });
+    toast({ title: 'Redeemed! 🏴‍☠️', description: `${item.name} has been redeemed.` });
     setSelectedItem(null);
   };
 
@@ -32,7 +31,6 @@ const PirateBucksPage = () => {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold flex items-center gap-2"><Coins className="text-warning" /> Pirate Bucks</h1>
-        <DemoBadge />
       </div>
 
       {/* Balance */}
@@ -100,7 +98,7 @@ const PirateBucksPage = () => {
                 <p className="text-xs text-muted-foreground mt-1">Your balance: 🪙 {balance}</p>
               </div>
               <Button className="w-full" onClick={() => handleRedeem(selectedItem)} disabled={balance < selectedItem.cost}>
-                <ShoppingBag size={16} /> Redeem (Demo)
+                <ShoppingBag size={16} /> Redeem
               </Button>
               {balance < selectedItem.cost && (
                 <p className="text-xs text-destructive">Not enough Pirate Bucks</p>

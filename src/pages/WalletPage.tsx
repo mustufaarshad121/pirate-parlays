@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { DEMO_TRANSACTIONS, Transaction } from '@/lib/data';
+import { SAMPLE_TRANSACTIONS, Transaction } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Wallet as WalletIcon, ArrowDownLeft, ArrowUpRight, CheckCircle } from 'lucide-react';
@@ -16,7 +16,7 @@ const WalletPage = () => {
   const [amount, setAmount] = useState('');
   const [success, setSuccess] = useState('');
 
-  const txns = DEMO_TRANSACTIONS.filter((t) => filter === 'all' || t.type === filter);
+  const txns = SAMPLE_TRANSACTIONS.filter((t) => filter === 'all' || t.type === filter);
 
   const handleDeposit = () => {
     const n = parseFloat(amount);

@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import DemoBadge from '@/components/DemoBadge';
 
 type StatusFilter = 'all' | 'active' | 'suspended' | 'flagged';
 
@@ -54,7 +53,6 @@ const AdminUsers = () => {
     <div className="max-w-6xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-xl">User Management & Oversight</h1>
-        <DemoBadge />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">

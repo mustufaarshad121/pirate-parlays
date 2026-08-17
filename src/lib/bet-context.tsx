@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { BetSlipItem, Bet, DEMO_BETS } from './data';
+import { BetSlipItem, Bet, SAMPLE_BETS } from './data';
 import { useAuth } from './auth';
 
 interface BetContextType {
@@ -16,7 +16,7 @@ const BetContext = createContext<BetContextType | null>(null);
 
 export const BetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [slipItems, setSlipItems] = useState<BetSlipItem[]>([]);
-  const [bets, setBets] = useState<Bet[]>(DEMO_BETS);
+  const [bets, setBets] = useState<Bet[]>(SAMPLE_BETS);
   const { user, updateBalance } = useAuth();
 
   const addToSlip = useCallback((item: BetSlipItem) => {

@@ -3,7 +3,6 @@ import { MODERATION_QUEUE, REPORTED_CONTENT, ModerationItem } from '@/lib/admin-
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import DemoBadge from '@/components/DemoBadge';
 import { ShieldAlert } from 'lucide-react';
 
 const stateLabel: Record<ModerationItem['state'], string> = {
@@ -70,7 +69,6 @@ const AdminModeration = () => {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-xl flex items-center gap-2"><ShieldAlert size={20} /> Moderation</h1>
-        <DemoBadge />
       </div>
 
       <section className="space-y-2">

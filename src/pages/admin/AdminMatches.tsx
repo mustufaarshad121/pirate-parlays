@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import DemoBadge from '@/components/DemoBadge';
 
 const clone = (m: Match): Match => JSON.parse(JSON.stringify(m));
 
@@ -42,7 +41,6 @@ const AdminMatches = () => {
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display font-bold text-xl">Matches & Odds Management</h1>
-        <DemoBadge />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
 import { CURRENT_PROFILE, ALL_SPORTS, RANK_ICONS } from '@/lib/mock-social';
 import RankBadge from '@/components/RankBadge';
-import DemoBadge from '@/components/DemoBadge';
 import { User, Trophy, Target, Flame, Award, TrendingUp, Edit2, Save, Camera } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -30,7 +29,6 @@ const ProfilePage = () => {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">My Profile</h1>
-        <DemoBadge />
       </div>
 
       {/* Avatar + Basic Info */}

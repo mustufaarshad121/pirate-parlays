@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MOCK_LEADERBOARD } from '@/lib/mock-social';
 import RankBadge from '@/components/RankBadge';
-import DemoBadge from '@/components/DemoBadge';
 import { Trophy, Flame, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
@@ -59,7 +58,6 @@ const LeaderboardPage = () => {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold flex items-center gap-2"><Trophy className="text-warning" /> Leaderboard</h1>
-        <DemoBadge />
       </div>
       <Tabs defaultValue="alltime">
         <TabsList className="w-full">

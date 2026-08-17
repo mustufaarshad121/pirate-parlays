@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth';
 import { MOCK_DM_THREADS, MOCK_DM_MESSAGES, type ChatMessage } from '@/lib/mock-social';
-import DemoBadge from '@/components/DemoBadge';
 import { ArrowLeft, Send, MessageCircle } from 'lucide-react';
 
 const DMPage = () => {
@@ -36,7 +35,6 @@ const DMPage = () => {
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-display font-bold flex items-center gap-2"><MessageCircle size={24} /> Messages</h1>
-          <DemoBadge />
         </div>
 
         {threads.map(thread => (
@@ -75,7 +73,6 @@ const DMPage = () => {
         <Button variant="ghost" size="icon" onClick={() => setSelectedThread(null)}><ArrowLeft size={20} /></Button>
         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-sm">{thread.recipientName.charAt(0)}</div>
         <h2 className="font-display font-bold">{thread.recipientName}</h2>
-        <DemoBadge />
       </div>
 
       <div className="flex-1 overflow-auto space-y-3 bg-secondary/20 rounded-lg p-3">

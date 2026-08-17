@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import DemoBadge from '@/components/DemoBadge';
 import { Play, BarChart3 } from 'lucide-react';
 
 const LiveStreamPage = () => {
@@ -7,7 +6,6 @@ const LiveStreamPage = () => {
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">Live Stream</h1>
-        <DemoBadge label="Demo Mode — No live stream" />
       </div>
 
       {/* Video Player */}

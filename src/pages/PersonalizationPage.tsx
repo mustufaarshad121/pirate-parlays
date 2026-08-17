@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { MOCK_SUGGESTED_PARLAYS } from '@/lib/mock-social';
-import DemoBadge from '@/components/DemoBadge';
 import { Sparkles, Bell, Palette, Zap } from 'lucide-react';
 
 const PersonalizationPage = () => {
@@ -21,7 +20,6 @@ const PersonalizationPage = () => {
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-display font-bold">Personalization & Alerts</h1>
-        <DemoBadge />
       </div>
 
       {/* AI Suggestions */}
@@ -40,7 +38,7 @@ const PersonalizationPage = () => {
 
           {aiSuggestions && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><Zap size={12} className="text-warning" /> Demo AI Suggestions</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Zap size={12} className="text-warning" /> AI Suggestions</p>
               {MOCK_SUGGESTED_PARLAYS.map(parlay => (
                 <div key={parlay.id} className="bg-secondary/50 rounded-lg p-3 border border-border">
                   <div className="flex items-center justify-between mb-1">
@@ -80,7 +78,7 @@ const PersonalizationPage = () => {
               </button>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">⚠️ Theme switching is visual only in demo.</p>
+          <p className="text-xs text-muted-foreground mt-2">⚠️ Theme switching is visual only for now.</p>
         </CardContent>
       </Card>
 
