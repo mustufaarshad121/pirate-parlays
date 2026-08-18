@@ -277,12 +277,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      app_config_has_number: {
+        Args: { _key: string; _val: number }
+        Returns: boolean
+      }
+      create_private_group: {
+        Args: {
+          _entry: number
+          _name: string
+          _size: number
+          _slate_id: string
+        }
+        Returns: string
+      }
+      gen_group_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      join_group: { Args: { _group_id: string }; Returns: string }
+      join_group_by_code: { Args: { _code: string }; Returns: string }
+      join_group_internal: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: string
+      }
+      lock_due_groups: { Args: never; Returns: number }
+      quick_match: {
+        Args: { _entry: number; _size: number; _slate_id: string }
+        Returns: string
+      }
+      submit_picks: {
+        Args: { _group_id: string; _picks: Json }
+        Returns: number
       }
     }
     Enums: {
