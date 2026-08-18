@@ -14,16 +14,279 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_config: {
+        Row: {
+          key: string
+          needs_client_confirmation: boolean
+          note: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          needs_client_confirmation?: boolean
+          note?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          needs_client_confirmation?: boolean
+          note?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          entry_amount: number
+          group_size: number
+          id: string
+          is_private: boolean
+          locked_at: string | null
+          name: string | null
+          slate_id: string
+          status: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          entry_amount: number
+          group_size: number
+          id?: string
+          is_private?: boolean
+          locked_at?: string | null
+          name?: string | null
+          slate_id: string
+          status?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          entry_amount?: number
+          group_size?: number
+          id?: string
+          is_private?: boolean
+          locked_at?: string | null
+          name?: string | null
+          slate_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_slate_id_fkey"
+            columns: ["slate_id"]
+            isOneToOne: false
+            referencedRelation: "slates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      picks: {
+        Row: {
+          event_id: string
+          group_id: string
+          id: string
+          selection: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          group_id: string
+          id?: string
+          selection: string
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          group_id?: string
+          id?: string
+          selection?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "picks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "slate_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "picks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          balance: number
+          created_at: string
+          display_name: string | null
+          id: string
+          username: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          display_name?: string | null
+          id: string
+          username: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      slate_events: {
+        Row: {
+          away_team: string
+          created_at: string
+          home_team: string
+          id: string
+          result: string | null
+          slate_id: string
+          sort_order: number
+          starts_at: string | null
+        }
+        Insert: {
+          away_team: string
+          created_at?: string
+          home_team: string
+          id?: string
+          result?: string | null
+          slate_id: string
+          sort_order?: number
+          starts_at?: string | null
+        }
+        Update: {
+          away_team?: string
+          created_at?: string
+          home_team?: string
+          id?: string
+          result?: string | null
+          slate_id?: string
+          sort_order?: number
+          starts_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slate_events_slate_id_fkey"
+            columns: ["slate_id"]
+            isOneToOne: false
+            referencedRelation: "slates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          league: string
+          lock_at: string
+          name: string
+          starts_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          league: string
+          lock_at: string
+          name: string
+          starts_at: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          league?: string
+          lock_at?: string
+          name?: string
+          starts_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +413,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
