@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 // ─────────────────────────────────────────────────────────────
 // PIRATE PARLAYS — GROUPS
-// Same slate + same entry + same group, every player makes their
-// own picks and competes on their own results.
+// Pirate Parlays creates the game. Every bettor makes their own slip,
+// picks one wager and one group-size maximum, and the system places
+// them randomly among bettors matching game + wager + group size.
 //
 // Business values (entry amounts, group sizes, minimum players) are
 // stored in app_config and read at runtime — never hard-coded in UI.
@@ -74,7 +75,6 @@ const err = (e: unknown) => {
     GROUP_FULL: 'This group is full.',
     GROUP_LOCKED: 'This group is locked — picks can no longer be changed.',
     NOT_A_MEMBER: 'You are not a member of this group.',
-    INVALID_CODE: 'That invite code is not valid.',
     SLATE_CLOSED: 'Entries for this slate are closed.',
     SLATE_NOT_FOUND: 'That slate is no longer available.',
     INVALID_ENTRY: 'That entry amount is not available.',
@@ -210,23 +210,6 @@ export const useGroup = (groupId?: string) =>
     },
   });
 
-export const useGroupByCode = (code?: string) =>
-  useQuery({
-    enabled: !!code,
-    queryKey: ['group-by-code', code],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('groups')
-        .select('*, slates(*)')
-        .ilike('code', (code ?? '').trim())
-        .maybeSingle();
-      if (error) throw err(error);
-      if (!data) return null;
-      const { slates, ...rest } = data as Group & { slates: Slate | null };
-      return { ...(rest as Group), slate: slates ?? null };
-    },
-  });
-
 export const useGroupMembers = (groupId?: string) =>
   useQuery({
     enabled: !!groupId,
@@ -286,35 +269,6 @@ export const useQuickMatch = () => {
         _entry: v.entry,
         _size: v.size,
       });
-      if (error) throw err(error);
-      return data as string;
-    },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['my-groups'] }); },
-  });
-};
-
-export const useCreatePrivateGroup = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (v: { slateId: string; entry: number; size: number; name: string }) => {
-      const { data, error } = await supabase.rpc('create_private_group', {
-        _slate_id: v.slateId,
-        _entry: v.entry,
-        _size: v.size,
-        _name: v.name,
-      });
-      if (error) throw err(error);
-      return data as string;
-    },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['my-groups'] }); },
-  });
-};
-
-export const useJoinByCode = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (code: string) => {
-      const { data, error } = await supabase.rpc('join_group_by_code', { _code: code });
       if (error) throw err(error);
       return data as string;
     },
