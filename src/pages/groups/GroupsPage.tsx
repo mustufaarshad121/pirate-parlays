@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/lib/auth';
 import { applyDueLocks, useMyGroups, useSlates, STATUS_LABEL, type GroupStatus } from '@/lib/groups';
-import { Anchor, ChevronRight, KeyRound, Loader2, Shuffle, Users } from 'lucide-react';
+import { Anchor, ChevronRight, Loader2, Shuffle } from 'lucide-react';
 
 export const statusStyle: Record<GroupStatus, string> = {
   open: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
@@ -37,7 +37,7 @@ const GroupsPage = () => {
           <Anchor size={24} /> Groups
         </h1>
         <p className="text-sm text-muted-foreground">
-          Join a group, make your own picks, and compete against other Pirates.
+          Make your own picks, choose your entry and group size, and get placed randomly with other Pirates.
         </p>
       </header>
 
@@ -60,7 +60,7 @@ const GroupsPage = () => {
 
       {!slatesLoading && !hasSlates && (
         <Card><CardContent className="p-6 text-center space-y-1">
-          <p className="font-display font-semibold">No games available yet</p>
+          <p className="font-display font-semibold">No Grouping Games Available</p>
           <p className="text-xs text-muted-foreground">
             Pirate Parlays creates the games. Check back when a slate is open for entries.
           </p>
@@ -68,7 +68,7 @@ const GroupsPage = () => {
       )}
 
       <section className="space-y-2">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">My Groups</p>
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">My Entries</p>
         {isLoading ? (
           <div className="space-y-2">{[0, 1].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
         ) : isError ? (
@@ -78,7 +78,7 @@ const GroupsPage = () => {
           </CardContent></Card>
         ) : active.length === 0 ? (
           <Card><CardContent className="p-4 text-sm text-muted-foreground text-center">
-            You haven't joined a group yet.
+            You have no entries yet.
           </CardContent></Card>
         ) : (
           active.map(g => <GroupRow key={g.id} group={g} onOpen={() => navigate(`/groups/${g.id}`)} />)
@@ -87,7 +87,7 @@ const GroupsPage = () => {
 
       {past.length > 0 && (
         <section className="space-y-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">Past Groups</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">Past Entries</p>
           {past.map(g => <GroupRow key={g.id} group={g} onOpen={() => navigate(`/groups/${g.id}`)} />)}
         </section>
       )}
@@ -109,7 +109,7 @@ const GroupRow = ({
           {group.slate?.name ?? 'Slate'} {group.name ? `• ${group.name}` : ''}
         </p>
         <p className="text-xs text-muted-foreground">
-          ${Number(group.entry_amount)} entry • {group.memberCount} / {group.group_size} players • {group.is_private ? `Code ${group.code}` : 'Quick Match'}
+          ${Number(group.entry_amount)} entry • {group.memberCount} / {group.group_size} bettors
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
