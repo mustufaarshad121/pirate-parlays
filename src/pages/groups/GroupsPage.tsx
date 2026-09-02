@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/lib/auth';
 import { applyDueLocks, useMyGroups, useSlates, STATUS_LABEL, type GroupStatus } from '@/lib/groups';
-import { Anchor, ChevronRight, KeyRound, Loader2, Shuffle, Users } from 'lucide-react';
+import { Anchor, ChevronRight, Loader2, Shuffle } from 'lucide-react';
 
 export const statusStyle: Record<GroupStatus, string> = {
   open: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
@@ -37,49 +37,30 @@ const GroupsPage = () => {
           <Anchor size={24} /> Groups
         </h1>
         <p className="text-sm text-muted-foreground">
-          Join a group, make your own picks, and compete against other Pirates.
+          Make your own picks, choose your entry and group size, and get placed randomly with other Pirates.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Card className="border-primary/30">
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Shuffle size={18} className="text-primary" />
-              <p className="font-semibold">Quick Match</p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Pick a slate, entry amount and group size — you're placed into an open group automatically.
-            </p>
-            <Button className="w-full" disabled={!hasSlates} onClick={() => navigate('/groups/find?mode=quick')}>
-              Find a group
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Users size={18} className="text-primary" />
-              <p className="font-semibold">Private Group</p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Create a group and share the invite code, or join one with a code you were given.
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" disabled={!hasSlates} onClick={() => navigate('/groups/find?mode=private')}>
-                Create
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/groups/join')}>
-                <KeyRound size={14} className="mr-1" /> Join
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border-primary/30">
+        <CardContent className="p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Shuffle size={18} className="text-primary" />
+            <p className="font-semibold">Enter a Grouping Game</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Pirate Parlays creates the games. Choose a game, your entry amount and your group size — the system places
+            you randomly with other bettors who chose the same three. You cannot browse, choose or invite into a
+            specific group.
+          </p>
+          <Button className="w-full" disabled={!hasSlates} onClick={() => navigate('/groups/find')}>
+            Start my entry
+          </Button>
+        </CardContent>
+      </Card>
 
       {!slatesLoading && !hasSlates && (
         <Card><CardContent className="p-6 text-center space-y-1">
-          <p className="font-display font-semibold">No games available yet</p>
+          <p className="font-display font-semibold">No Grouping Games Available</p>
           <p className="text-xs text-muted-foreground">
             Pirate Parlays creates the games. Check back when a slate is open for entries.
           </p>
@@ -87,7 +68,7 @@ const GroupsPage = () => {
       )}
 
       <section className="space-y-2">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">My Groups</p>
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">My Entries</p>
         {isLoading ? (
           <div className="space-y-2">{[0, 1].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>
         ) : isError ? (
@@ -97,7 +78,7 @@ const GroupsPage = () => {
           </CardContent></Card>
         ) : active.length === 0 ? (
           <Card><CardContent className="p-4 text-sm text-muted-foreground text-center">
-            You haven't joined a group yet.
+            You have no entries yet.
           </CardContent></Card>
         ) : (
           active.map(g => <GroupRow key={g.id} group={g} onOpen={() => navigate(`/groups/${g.id}`)} />)
@@ -106,7 +87,7 @@ const GroupsPage = () => {
 
       {past.length > 0 && (
         <section className="space-y-2">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">Past Groups</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold px-1">Past Entries</p>
           {past.map(g => <GroupRow key={g.id} group={g} onOpen={() => navigate(`/groups/${g.id}`)} />)}
         </section>
       )}
@@ -118,7 +99,7 @@ const GroupRow = ({
   group,
   onOpen,
 }: {
-  group: { id: string; code: string; name: string | null; status: GroupStatus; entry_amount: number; group_size: number; memberCount: number; is_private: boolean; slate: { name: string; league: string } | null };
+  group: { id: string; name: string | null; status: GroupStatus; entry_amount: number; group_size: number; memberCount: number; slate: { name: string; league: string } | null };
   onOpen: () => void;
 }) => (
   <Card className="cursor-pointer hover:border-primary/40 transition-colors" onClick={onOpen}>
@@ -128,7 +109,7 @@ const GroupRow = ({
           {group.slate?.name ?? 'Slate'} {group.name ? `• ${group.name}` : ''}
         </p>
         <p className="text-xs text-muted-foreground">
-          ${Number(group.entry_amount)} entry • {group.memberCount} / {group.group_size} players • {group.is_private ? `Code ${group.code}` : 'Quick Match'}
+          ${Number(group.entry_amount)} entry • {group.memberCount} / {group.group_size} bettors
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">

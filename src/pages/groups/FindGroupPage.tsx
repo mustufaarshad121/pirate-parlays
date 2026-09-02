@@ -1,28 +1,24 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  useCreatePrivateGroup,
   useGroupsConfig,
   useQuickMatch,
   useSlateAvailability,
   useSlateEvents,
   useSlates,
 } from '@/lib/groups';
-import { ArrowLeft, Calendar, Loader2, Shuffle, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Shuffle, Trophy } from 'lucide-react';
 
 const fmt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
 const FindGroupPage = () => {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const mode = params.get('mode') === 'private' ? 'private' : 'quick';
 
   const { data: config, isLoading: configLoading } = useGroupsConfig();
   const { data: slates, isLoading: slatesLoading, isError, refetch } = useSlates();
@@ -31,12 +27,10 @@ const FindGroupPage = () => {
   const [slateId, setSlateId] = useState<string>('');
   const [entry, setEntry] = useState<number | null>(null);
   const [size, setSize] = useState<number | null>(null);
-  const [groupName, setGroupName] = useState('');
 
   const { data: events } = useSlateEvents(slateId || undefined);
   const quickMatch = useQuickMatch();
-  const createPrivate = useCreatePrivateGroup();
-  const busy = quickMatch.isPending || createPrivate.isPending;
+  const busy = quickMatch.isPending;
 
   const slate = useMemo(() => slates?.find(s => s.id === slateId), [slates, slateId]);
   const ready = !!slateId && entry !== null && size !== null;
@@ -44,9 +38,7 @@ const FindGroupPage = () => {
   const submit = async () => {
     if (!ready) return;
     try {
-      const groupId = mode === 'private'
-        ? await createPrivate.mutateAsync({ slateId, entry: entry!, size: size!, name: groupName })
-        : await quickMatch.mutateAsync({ slateId, entry: entry!, size: size! });
+      const groupId = await quickMatch.mutateAsync({ slateId, entry: entry!, size: size! });
       navigate(`/groups/${groupId}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not join a group.');
@@ -58,11 +50,9 @@ const FindGroupPage = () => {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate('/groups')}><ArrowLeft size={20} /></Button>
         <div>
-          <h1 className="text-xl font-display font-bold">{mode === 'private' ? 'Create a private group' : 'Quick Match'}</h1>
+          <h1 className="text-xl font-display font-bold">Enter a Grouping Game</h1>
           <p className="text-xs text-muted-foreground">
-            {mode === 'private'
-              ? 'Set up a group and share the invite code with your crew.'
-              : "Choose your game and stake — we'll place you in an open group."}
+            Choose your game, entry amount and group size — placement is random among matching bettors.
           </p>
         </div>
       </div>
@@ -158,34 +148,19 @@ const FindGroupPage = () => {
                     size === s ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/40'
                   }`}
                 >
-                  {s} players
+                  {s} people max
                 </button>
               ))}
             </div>
           )}
           {config?.minimumPlayers != null && (
             <p className="text-xs text-muted-foreground">
-              A group needs at least {config.minimumPlayers} real players at lock time. Below that it is voided — no filler
-              or bot entries are ever added.
+              A group needs at least {config.minimumPlayers} real bettors to proceed, even if the selected maximum is not filled.
+              Fewer than {config.minimumPlayers} is null and void — no company or AI filler slips are ever added.
             </p>
           )}
         </CardContent>
       </Card>
-
-      {mode === 'private' && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Group name (optional)</CardTitle></CardHeader>
-          <CardContent>
-            <Input
-              value={groupName}
-              maxLength={40}
-              placeholder="e.g. Sunday Crew"
-              onChange={e => setGroupName(e.target.value)}
-              className="bg-secondary border-border"
-            />
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="border-warning/30 bg-warning/5">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -200,10 +175,8 @@ const FindGroupPage = () => {
       <div className="fixed bottom-0 left-0 right-0 md:static bg-background/95 backdrop-blur border-t border-border md:border-0 p-3 md:p-0">
         <div className="max-w-2xl mx-auto">
           <Button className="w-full h-12 text-base font-bold" disabled={!ready || busy} onClick={submit}>
-            {busy ? <Loader2 className="animate-spin mr-2" size={18} /> : mode === 'private'
-              ? <Users size={18} className="mr-2" />
-              : <Shuffle size={18} className="mr-2" />}
-            {mode === 'private' ? 'Create group' : 'Find my group'}
+            {busy ? <Loader2 className="animate-spin mr-2" size={18} /> : <Shuffle size={18} className="mr-2" />}
+            Submit my entry
           </Button>
         </div>
       </div>

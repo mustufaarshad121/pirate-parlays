@@ -36,7 +36,7 @@ const GroupChatPage = () => {
             <CardContent className="p-3 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold truncate">{g.slate?.name ?? 'Group'} {g.name ? `• ${g.name}` : ''}</p>
-                <p className="text-xs text-muted-foreground">{g.memberCount} / {g.group_size} players • Code {g.code}</p>
+                <p className="text-xs text-muted-foreground">{g.memberCount} / {g.group_size} bettors</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="outline" className={`text-[10px] ${statusStyle[g.status]}`}>{STATUS_LABEL[g.status]}</Badge>

@@ -26,7 +26,6 @@ import GroupsPage from "./pages/groups/GroupsPage";
 import FindGroupPage from "./pages/groups/FindGroupPage";
 import GroupLobbyPage from "./pages/groups/GroupLobbyPage";
 import PicksPage from "./pages/groups/PicksPage";
-import JoinByCodePage from "./pages/groups/JoinByCodePage";
 import GroupChatPage from "./pages/GroupChatPage";
 import DMPage from "./pages/DMPage";
 import CaptainGroupsPage from "./pages/CaptainGroupsPage";
@@ -92,8 +91,6 @@ const AppRoutes = () => {
           <Route path="/personalization" element={<PersonalizationPage />} />
           <Route path="/groups" element={<GroupsPage />} />
           <Route path="/groups/find" element={<FindGroupPage />} />
-          <Route path="/groups/join" element={<JoinByCodePage />} />
-          <Route path="/groups/join/:code" element={<JoinByCodePage />} />
           <Route path="/groups/:id" element={<GroupLobbyPage />} />
           <Route path="/groups/:id/picks" element={<PicksPage />} />
           <Route path="/group-chat" element={<GroupChatPage />} />
