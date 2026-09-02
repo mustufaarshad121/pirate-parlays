@@ -155,7 +155,7 @@ const FindGroupPage = () => {
           )}
           {config?.minimumPlayers != null && (
             <p className="text-xs text-muted-foreground">
-              A group needs at least {config.minimumPlayers} real bettors to proceed, even if the {'{'}maximum{'}'} is not filled.
+              A group needs at least {config.minimumPlayers} real bettors to proceed, even if the selected maximum is not filled.
               Fewer than {config.minimumPlayers} is null and void — no company or AI filler slips are ever added.
             </p>
           )}

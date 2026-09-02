@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -22,7 +21,7 @@ import {
 import { statusStyle } from './GroupsPage';
 import GroupChatPanel from './GroupChatPanel';
 import {
-  ArrowLeft, CheckCircle2, ClipboardCopy, Clock, DollarSign, Info, ShieldX, Users,
+  ArrowLeft, CheckCircle2, Clock, DollarSign, Info, ShieldX, Users,
 } from 'lucide-react';
 
 const GroupLobbyPage = () => {
@@ -94,11 +93,6 @@ const GroupLobbyPage = () => {
   const lockAt = slate ? new Date(slate.lock_at) : null;
   const editable = group.status === 'open' && !!lockAt && lockAt.getTime() > now;
 
-  const copyCode = async () => {
-    await navigator.clipboard.writeText(`${window.location.origin}/groups/join/${group.code}`);
-    toast.success('Invite link copied.');
-  };
-
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-24">
       <div className="flex items-center gap-3">
@@ -109,7 +103,7 @@ const GroupLobbyPage = () => {
             <Badge variant="outline" className={`text-[10px] ${statusStyle[group.status]}`}>{STATUS_LABEL[group.status]}</Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            {group.name ? `${group.name} • ` : ''}{group.is_private ? 'Private group' : 'Quick Match group'} • Code {group.code}
+            {group.name ?? 'Group'} • Randomly assigned
           </p>
         </div>
       </div>
@@ -123,7 +117,7 @@ const GroupLobbyPage = () => {
         <Card><CardContent className="p-3 text-center">
           <Users size={14} className="mx-auto text-muted-foreground mb-1" />
           <p className="text-sm font-bold">{memberCount} / {group.group_size}</p>
-          <p className="text-[10px] text-muted-foreground">Players</p>
+          <p className="text-[10px] text-muted-foreground">Bettors</p>
         </CardContent></Card>
         <Card><CardContent className="p-3 text-center">
           <Clock size={14} className="mx-auto text-muted-foreground mb-1" />
@@ -140,8 +134,8 @@ const GroupLobbyPage = () => {
           <p className="text-xs text-muted-foreground">
             {memberCount} of {group.group_size} spots filled.{' '}
             {min != null && (minMet
-              ? `Minimum of ${min} players met.`
-              : `${min - memberCount} more needed to reach the ${min}-player minimum.`)}
+              ? `Minimum of ${min} bettors met — this group can proceed even if it is not full.`
+              : `${min - memberCount} more needed to reach the ${min}-bettor minimum.`)}
           </p>
         </CardContent>
       </Card>
@@ -169,10 +163,10 @@ const GroupLobbyPage = () => {
             <div className="flex items-start gap-2">
               <ShieldX size={18} className="text-destructive shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-destructive">Void</p>
+                <p className="font-semibold text-destructive">Null and Void</p>
                 <p className="text-xs text-muted-foreground">
-                  This group did not reach the required number of players before lock time. Pirate Parlays never fills
-                  missing spots with bot or company entries.
+                  This group had fewer than the required number of bettors. Pirate Parlays never fills missing spots
+                  with company or AI slips.
                 </p>
                 <p className="text-[11px] text-warning mt-1">
                   Handling of the original entry amount is pending client confirmation — no refund, transfer, or
@@ -180,17 +174,7 @@ const GroupLobbyPage = () => {
                 </p>
               </div>
             </div>
-            <Button className="w-full" onClick={() => navigate('/groups/find?mode=quick')}>Join another group</Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {group.is_private && group.status === 'open' && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Invite your crew</CardTitle></CardHeader>
-          <CardContent className="flex items-center gap-2">
-            <code className="flex-1 bg-secondary rounded px-3 py-2 font-mono tracking-widest text-center">{group.code}</code>
-            <Button variant="outline" size="icon" onClick={copyCode}><ClipboardCopy size={16} /></Button>
+            <Button className="w-full" onClick={() => navigate('/groups/find')}>Fill out another slip</Button>
           </CardContent>
         </Card>
       )}
