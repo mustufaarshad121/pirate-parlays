@@ -313,15 +313,6 @@ export type Database = {
         Args: { _key: string; _val: number }
         Returns: boolean
       }
-      create_private_group: {
-        Args: {
-          _entry: number
-          _name: string
-          _size: number
-          _slate_id: string
-        }
-        Returns: string
-      }
       gen_group_code: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -330,8 +321,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      join_group: { Args: { _group_id: string }; Returns: string }
-      join_group_by_code: { Args: { _code: string }; Returns: string }
       join_group_internal: {
         Args: { _group_id: string; _user_id: string }
         Returns: string
