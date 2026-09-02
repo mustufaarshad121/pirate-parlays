@@ -99,7 +99,7 @@ const GroupRow = ({
   group,
   onOpen,
 }: {
-  group: { id: string; code: string; name: string | null; status: GroupStatus; entry_amount: number; group_size: number; memberCount: number; is_private: boolean; slate: { name: string; league: string } | null };
+  group: { id: string; name: string | null; status: GroupStatus; entry_amount: number; group_size: number; memberCount: number; slate: { name: string; league: string } | null };
   onOpen: () => void;
 }) => (
   <Card className="cursor-pointer hover:border-primary/40 transition-colors" onClick={onOpen}>

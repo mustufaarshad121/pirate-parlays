@@ -213,7 +213,6 @@ const AdminGrouping = () => {
                         <div key={g.id} className="flex items-center justify-between text-xs bg-background/40 rounded px-2 py-1.5">
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <Users size={12} /> {g.code} • ${Number(g.entry_amount)} • {g.memberCount} / {g.group_size}
-                            {g.is_private ? ' • private' : ''}
                           </span>
                           <Badge variant="outline" className="text-[10px]">{STATUS_LABEL[g.status]}</Badge>
                         </div>
