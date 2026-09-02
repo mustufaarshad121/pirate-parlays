@@ -210,11 +210,17 @@ const AdminGrouping = () => {
                   {slateGroups.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {slateGroups.map(g => (
-                        <div key={g.id} className="flex items-center justify-between text-xs bg-background/40 rounded px-2 py-1.5">
-                          <span className="flex items-center gap-1 text-muted-foreground">
-                            <Users size={12} /> {g.code} • ${Number(g.entry_amount)} • {g.memberCount} / {g.group_size}
-                          </span>
-                          <Badge variant="outline" className="text-[10px]">{STATUS_LABEL[g.status]}</Badge>
+                        <div key={g.id} className="bg-background/40 rounded">
+                          <button
+                            onClick={() => setOpenGroup(prev => (prev === g.id ? null : g.id))}
+                            className="w-full flex items-center justify-between text-xs px-2 py-1.5"
+                          >
+                            <span className="flex items-center gap-1 text-muted-foreground">
+                              <Users size={12} /> {g.name ?? g.code} • ${Number(g.entry_amount)} • {g.memberCount} / {g.group_size}
+                            </span>
+                            <Badge variant="outline" className="text-[10px]">{STATUS_LABEL[g.status]}</Badge>
+                          </button>
+                          {openGroup === g.id && <GroupOversight groupId={g.id} />}
                         </div>
                       ))}
                     </div>
