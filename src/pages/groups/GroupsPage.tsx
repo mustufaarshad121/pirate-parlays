@@ -41,41 +41,22 @@ const GroupsPage = () => {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Card className="border-primary/30">
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Shuffle size={18} className="text-primary" />
-              <p className="font-semibold">Quick Match</p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Pick a slate, entry amount and group size — you're placed into an open group automatically.
-            </p>
-            <Button className="w-full" disabled={!hasSlates} onClick={() => navigate('/groups/find?mode=quick')}>
-              Find a group
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Users size={18} className="text-primary" />
-              <p className="font-semibold">Private Group</p>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Create a group and share the invite code, or join one with a code you were given.
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" disabled={!hasSlates} onClick={() => navigate('/groups/find?mode=private')}>
-                Create
-              </Button>
-              <Button variant="outline" onClick={() => navigate('/groups/join')}>
-                <KeyRound size={14} className="mr-1" /> Join
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border-primary/30">
+        <CardContent className="p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Shuffle size={18} className="text-primary" />
+            <p className="font-semibold">Enter a Grouping Game</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Pirate Parlays creates the games. Choose a game, your entry amount and your group size — the system places
+            you randomly with other bettors who chose the same three. You cannot browse, choose or invite into a
+            specific group.
+          </p>
+          <Button className="w-full" disabled={!hasSlates} onClick={() => navigate('/groups/find')}>
+            Start my entry
+          </Button>
+        </CardContent>
+      </Card>
 
       {!slatesLoading && !hasSlates && (
         <Card><CardContent className="p-6 text-center space-y-1">
