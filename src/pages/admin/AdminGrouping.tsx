@@ -16,6 +16,66 @@ const LEAGUES = ['NFL', 'NBA', 'EPL'];
 interface DraftMatch { homeTeam: string; awayTeam: string; startsAt: string }
 const emptyMatch: DraftMatch = { homeTeam: '', awayTeam: '', startsAt: '' };
 
+const GroupOversight = ({ groupId }: { groupId: string }) => {
+  const { data: members, isLoading } = useGroupMembers(groupId);
+  const { data: messages } = useQuery({
+    queryKey: ['admin-group-messages', groupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('group_messages')
+        .select('id, user_id, body, created_at')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: true })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  return (
+    <div className="px-3 pb-3 pt-1 space-y-3 border-t border-border/50">
+      <div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Bettors</p>
+        {isLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (members?.length ?? 0) === 0 ? (
+          <p className="text-xs text-muted-foreground">No bettors yet.</p>
+        ) : (
+          <ul className="space-y-1">
+            {members!.map(m => (
+              <li key={m.user_id} className="flex items-center justify-between text-xs">
+                <span>{m.display_name ?? m.username}</span>
+                <span className="text-muted-foreground">{m.picksSubmitted > 0 ? 'Slip submitted' : 'No slip yet'}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Group chat (read only)</p>
+        {(messages?.length ?? 0) === 0 ? (
+          <p className="text-xs text-muted-foreground">No messages yet.</p>
+        ) : (
+          <ul className="space-y-1 max-h-40 overflow-y-auto">
+            {messages!.map(msg => {
+              const author = members?.find(m => m.user_id === msg.user_id);
+              return (
+                <li key={msg.id} className="text-xs text-muted-foreground">
+                  <span className="text-foreground font-medium">{author?.display_name ?? author?.username ?? 'Pirate'}:</span>{' '}
+                  {msg.body}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        View only. Admin cannot change membership, placement, or payouts.
+      </p>
+    </div>
+  );
+};
+
 const AdminGrouping = () => {
   const { toast } = useToast();
   const { user } = useAuth();
