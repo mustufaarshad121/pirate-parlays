@@ -80,7 +80,10 @@ const err = (e: unknown) => {
     INVALID_ENTRY: 'That entry amount is not available.',
     INVALID_SIZE: 'That group size is not available.',
     INVALID_SELECTION: 'One of your selections is not valid.',
-    INVALID_EVENT: 'One of your selections is not part of this slate.',
+    INVALID_EVENT: 'One of your selections is not part of this game.',
+    ENTRY_EXISTS: 'You already have an entry for this game.',
+    NO_SELECTIONS: 'Make at least one selection before submitting.',
+
   };
   const key = Object.keys(map).find(k => msg.includes(k));
   return new Error(key ? map[key] : msg);
