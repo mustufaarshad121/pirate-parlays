@@ -35,6 +35,99 @@ export type Database = {
         }
         Relationships: []
       }
+      entries: {
+        Row: {
+          created_at: string
+          group_id: string | null
+          group_size: number
+          id: string
+          slate_id: string
+          status: string
+          submitted_at: string
+          updated_at: string
+          user_id: string
+          wager_amount: number
+        }
+        Insert: {
+          created_at?: string
+          group_id?: string | null
+          group_size: number
+          id?: string
+          slate_id: string
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+          wager_amount: number
+        }
+        Update: {
+          created_at?: string
+          group_id?: string | null
+          group_size?: number
+          id?: string
+          slate_id?: string
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+          wager_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_slate_id_fkey"
+            columns: ["slate_id"]
+            isOneToOne: false
+            referencedRelation: "slates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entry_picks: {
+        Row: {
+          created_at: string
+          entry_id: string
+          event_id: string
+          id: string
+          selection: string
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          event_id: string
+          id?: string
+          selection: string
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          event_id?: string
+          id?: string
+          selection?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entry_picks_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entry_picks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "slate_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
@@ -330,9 +423,17 @@ export type Database = {
         Args: { _entry: number; _size: number; _slate_id: string }
         Returns: string
       }
+      submit_entry: {
+        Args: { _picks: Json; _size: number; _slate_id: string; _wager: number }
+        Returns: string
+      }
       submit_picks: {
         Args: { _group_id: string; _picks: Json }
         Returns: number
+      }
+      try_form_group: {
+        Args: { _size: number; _slate_id: string; _wager: number }
+        Returns: string
       }
     }
     Enums: {
