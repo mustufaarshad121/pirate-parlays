@@ -223,12 +223,11 @@ export const useGroupMembers = (groupId?: string) =>
       if (error) throw err(error);
       const ids = (members ?? []).map(m => m.user_id);
       if (ids.length === 0) return [];
-      const [{ data: profiles }, { data: picks }] = await Promise.all([
+      const [{ data: profiles }, { data: entryRows }] = await Promise.all([
         supabase.from('profiles').select('id, username, display_name').in('id', ids),
-        supabase.from('picks').select('user_id').eq('group_id', groupId!),
+        supabase.from('entries').select('user_id').eq('group_id', groupId!),
       ]);
-      const pickCount: Record<string, number> = {};
-      (picks ?? []).forEach(p => { pickCount[p.user_id] = (pickCount[p.user_id] ?? 0) + 1; });
+      const submitted = new Set((entryRows ?? []).map(e => e.user_id));
       return (members ?? []).map(m => {
         const p = profiles?.find(x => x.id === m.user_id);
         return {
@@ -236,22 +235,70 @@ export const useGroupMembers = (groupId?: string) =>
           joined_at: m.joined_at,
           username: p?.username ?? 'Pirate',
           display_name: p?.display_name ?? null,
-          picksSubmitted: pickCount[m.user_id] ?? 0,
+          picksSubmitted: submitted.has(m.user_id) ? 1 : 0,
         };
       });
     },
   });
 
-export const useMyPicks = (groupId?: string, userId?: string) =>
+// ─── ENTRIES (individual slips) ────────────────────────────
+export type EntryStatus = 'waiting' | 'grouped' | 'void';
+
+export interface Entry {
+  id: string;
+  slate_id: string;
+  user_id: string;
+  wager_amount: number;
+  group_size: number;
+  status: EntryStatus;
+  group_id: string | null;
+  submitted_at: string;
+}
+
+export interface EntryRow extends Entry {
+  slate: Slate | null;
+  group: Group | null;
+  memberCount: number;
+}
+
+export const useMyEntries = (userId?: string) =>
   useQuery({
-    enabled: !!groupId && !!userId,
-    queryKey: ['my-picks', groupId, userId],
+    enabled: !!userId,
+    queryKey: ['my-entries', userId],
+    queryFn: async (): Promise<EntryRow[]> => {
+      const { data, error } = await supabase
+        .from('entries')
+        .select('*, slates(*), groups(*)')
+        .eq('user_id', userId!)
+        .order('submitted_at', { ascending: false });
+      if (error) throw err(error);
+      const rows = (data ?? []) as unknown as (Entry & { slates: Slate | null; groups: Group | null })[];
+      const groupIds = rows.map(r => r.group_id).filter(Boolean) as string[];
+      let counts: Record<string, number> = {};
+      if (groupIds.length) {
+        const { data: m } = await supabase.from('group_members').select('group_id').in('group_id', groupIds);
+        counts = {};
+        (m ?? []).forEach(r => { counts[r.group_id] = (counts[r.group_id] ?? 0) + 1; });
+      }
+      return rows.map(({ slates, groups, ...rest }) => ({
+        ...(rest as Entry),
+        slate: slates ?? null,
+        group: groups ?? null,
+        memberCount: rest.group_id ? counts[rest.group_id] ?? 0 : 0,
+      }));
+    },
+  });
+
+/** The signed-in bettor's own slip selections for one entry. */
+export const useEntryPicks = (entryId?: string) =>
+  useQuery({
+    enabled: !!entryId,
+    queryKey: ['entry-picks', entryId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('picks')
+        .from('entry_picks')
         .select('event_id, selection')
-        .eq('group_id', groupId!)
-        .eq('user_id', userId!);
+        .eq('entry_id', entryId!);
       if (error) throw err(error);
       const map: Record<string, Selection> = {};
       (data ?? []).forEach(p => { map[p.event_id] = p.selection as Selection; });
@@ -260,36 +307,26 @@ export const useMyPicks = (groupId?: string, userId?: string) =>
   });
 
 // ─── ACTIONS ───────────────────────────────────────────────
-export const useQuickMatch = () => {
+export const useSubmitEntry = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { slateId: string; entry: number; size: number }) => {
-      const { data, error } = await supabase.rpc('quick_match', {
+    mutationFn: async (v: { slateId: string; wager: number; size: number; picks: Record<string, Selection> }) => {
+      const { data, error } = await supabase.rpc('submit_entry', {
         _slate_id: v.slateId,
-        _entry: v.entry,
+        _wager: v.wager,
         _size: v.size,
+        _picks: v.picks,
       });
       if (error) throw err(error);
       return data as string;
     },
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['my-groups'] }); },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['my-entries'] });
+      void qc.invalidateQueries({ queryKey: ['my-groups'] });
+    },
   });
 };
 
-export const useSubmitPicks = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (v: { groupId: string; picks: Record<string, Selection> }) => {
-      const { data, error } = await supabase.rpc('submit_picks', { _group_id: v.groupId, _picks: v.picks });
-      if (error) throw err(error);
-      return data as number;
-    },
-    onSuccess: (_d, v) => {
-      void qc.invalidateQueries({ queryKey: ['my-picks', v.groupId] });
-      void qc.invalidateQueries({ queryKey: ['group-members', v.groupId] });
-    },
-  });
-};
 
 /** Applies the configured lock/minimum-player rule server-side for anything past its lock time. */
 export const applyDueLocks = async () => {
