@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { STATUS_LABEL, applyDueLocks, useGroupsConfig, type Group, type Slate } from '@/lib/groups';
+import { STATUS_LABEL, applyDueLocks, useGroupMembers, useGroupsConfig, type Group, type Slate } from '@/lib/groups';
 import { Anchor, Info, Lock, Plus, Trash2, Users } from 'lucide-react';
 
 const LEAGUES = ['NFL', 'NBA', 'EPL'];
@@ -87,6 +87,7 @@ const AdminGrouping = () => {
   const [startsAt, setStartsAt] = useState('');
   const [lockAt, setLockAt] = useState('');
   const [draft, setDraft] = useState<DraftMatch[]>([{ ...emptyMatch }]);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   const { data: slates, isLoading } = useQuery({
     queryKey: ['admin-slates'],
